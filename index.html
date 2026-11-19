@@ -1,0 +1,3146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Death Squadron Planner</title>
+<style>
+  :root {
+    --bg-dark: #0b0e14;
+    --bg-panel: #131822;
+    --bg-card: #1a212e;
+    --bg-hover: #232c3d;
+    --border: #2c374b;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent-gold: #eab308;
+    --accent-red: #ef4444;
+    --accent-blue: #3b82f6;
+    --accent-green: #10b981;
+    --accent-purple: #a855f7;
+    --accent-orange: #f97316;
+    --accent-cyan: #06b6d4;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Header & Resource Tracker */
+  header {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    z-index: 10;
+  }
+
+  .title-area h1 {
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .title-area span {
+    font-size: 0.72rem;
+    background: var(--accent-red);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .stat-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .stat-pill strong { color: var(--accent-gold); }
+  .stat-pill.neg strong { color: var(--accent-red); }
+  .stat-pill.pos strong { color: var(--accent-green); }
+  .stat-pill.info strong { color: var(--accent-cyan); }
+
+  .actions-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  button:hover { background: var(--bg-hover); border-color: #475569; }
+  button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+  button.primary:hover { background: #2563eb; }
+  button.success { background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.5); color: #34d399; }
+  button.success:hover { background: rgba(16, 185, 129, 0.28); }
+  button.danger { color: var(--accent-red); border-color: rgba(239,68,68,0.4); }
+  button.danger:hover { background: rgba(239,68,68,0.15); }
+  button.add-btn {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: rgba(16, 185, 129, 0.45);
+    color: #34d399;
+    padding: 4px 9px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+  button.add-btn:hover { background: rgba(16, 185, 129, 0.25); }
+
+  /* Main Layout */
+  .workspace {
+    display: grid;
+    grid-template-columns: 370px 1fr;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* Left Sidebar: Roster & Dice */
+  .roster-panel {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .panel-header h2 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    color: var(--text-main);
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 0.82rem;
+  }
+
+  .roster-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .char-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 11px;
+    transition: border-color 0.2s, opacity 0.2s;
+  }
+
+  .char-card:hover { border-color: #475569; }
+  .char-card.deployed-lock {
+    border-color: rgba(6, 182, 212, 0.5);
+    background: rgba(6, 182, 212, 0.05);
+  }
+
+  .char-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    gap: 6px;
+  }
+
+  .char-name {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #fff;
+  }
+
+  .deployed-badge {
+    font-size: 0.68rem;
+    background: var(--accent-cyan);
+    color: #083344;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .faction-tag {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .char-modifiers {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+    line-height: 1.35;
+  }
+
+  .dice-tray {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 30px;
+    padding: 4px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 5px;
+  }
+
+  /* Draggable Die Token */
+  .die-token {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    transition: transform 0.1s;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .die-token:active { cursor: grabbing; transform: scale(0.96); }
+  .die-token.assigned { opacity: 0.3; cursor: not-allowed; }
+
+  .die-Free { background: linear-gradient(135deg, #ca8a04, #854d0e); color: #fef08a; }
+  .die-Military { background: linear-gradient(135deg, #dc2626, #7f1d1d); color: #fecaca; }
+  .die-Intelligence { background: linear-gradient(135deg, #7e22ce, #4c1d95); color: #e9d5ff; }
+  .die-Administration { background: linear-gradient(135deg, #2563eb, #1e3a8a); color: #bfdbfe; }
+  .die-Infrastructure { background: linear-gradient(135deg, #d97706, #78350f); color: #fde68a; }
+  .die-Industry { background: linear-gradient(135deg, #475569, #1e293b); color: #e2e8f0; }
+  .die-Services { background: linear-gradient(135deg, #059669, #064e3b); color: #a7f3d0; }
+
+  /* Right Main Area: Projects & Deployment */
+  .projects-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .category-tabs {
+    display: flex;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px 0;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    padding: 7px 12px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .tab-btn.active {
+    background: var(--bg-dark);
+    color: var(--accent-gold);
+    border-color: var(--border);
+  }
+  .tab-btn.deploy-tab.active {
+    color: var(--accent-cyan);
+  }
+
+  .projects-grid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+    gap: 12px;
+    align-content: start;
+  }
+
+  .project-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .project-card.has-dice {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 12px rgba(234, 179, 8, 0.12);
+  }
+
+  .project-card.is-clone {
+    border-left: 3px solid var(--accent-green);
+  }
+
+  .proj-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .proj-title {
+    font-weight: 700;
+    font-size: 0.94rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .clone-badge {
+    font-size: 0.68rem;
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .proj-cat-badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .proj-desc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.38;
+  }
+
+  .option-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .option-selector {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+  }
+
+  .proj-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    font-size: 0.74rem;
+  }
+
+  .meta-tag {
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #cbd5e1;
+  }
+
+  .meta-tag.cost { color: var(--accent-gold); font-weight: 600; }
+  .meta-tag.effect-pos { color: var(--accent-green); }
+  .meta-tag.warn { background: rgba(239,68,68,0.18); color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+
+  /* Drop Zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    min-height: 48px;
+    padding: 7px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background: rgba(0,0,0,0.2);
+    transition: all 0.15s;
+  }
+
+  .drop-zone.drag-over {
+    border-color: var(--accent-blue);
+    background: rgba(59, 130, 246, 0.12);
+  }
+
+  .drop-zone.drag-invalid {
+    border-color: var(--accent-red);
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .drop-placeholder {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: auto;
+    pointer-events: none;
+  }
+
+  .assigned-slot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 0.78rem;
+  }
+
+  .assigned-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .bonus-badge {
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+  }
+
+  .bonus-pos { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+  .bonus-neg { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  .bonus-zero { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+  .remove-die-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0 4px;
+  }
+  .remove-die-btn:hover { color: var(--accent-red); background: transparent; }
+
+  /* Special Direct Order Counter (Construction Queue) */
+  .order-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.25);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .qty-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .qty-btn {
+    padding: 2px 9px;
+    font-weight: 800;
+    font-size: 0.9rem;
+  }
+
+  /* Deployment View Styling */
+  .deploy-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .deploy-banner {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 16px;
+  }
+
+  .mission-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .mission-card:hover { border-color: #475569; }
+  .mission-card.selected {
+    border-color: var(--accent-cyan);
+    background: rgba(6, 182, 212, 0.08);
+  }
+
+  .ship-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+
+  .ship-table th, .ship-table td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ship-table th { color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; }
+
+  .ship-input {
+    width: 56px;
+    background: var(--bg-dark);
+    color: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 6px;
+    text-align: center;
+  }
+
+  /* Modal for BBCode Export, JSON I/O, and Save Slots */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 100%;
+    max-width: 780px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 90vh;
+  }
+
+  .modal textarea {
+    width: 100%;
+    height: 340px;
+    background: var(--bg-dark);
+    color: #e2e8f0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    font-family: monospace;
+    font-size: 0.82rem;
+    resize: vertical;
+  }
+
+  .json-scope-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.2);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .scope-tabs {
+    display: flex;
+    gap: 6px;
+  }
+
+  .scope-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #fff;
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .modal-footer-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .slots-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 420px;
+    padding-right: 2px;
+  }
+
+  .slot-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .slot-card.filled {
+    border-color: rgba(59, 130, 246, 0.45);
+  }
+
+  .slot-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .slot-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .slot-name-input {
+    background: var(--bg-dark);
+    color: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 4px 8px;
+    font-size: 0.82rem;
+    min-width: 180px;
+  }
+
+  .slot-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--accent-blue);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  .toast.error { background: var(--accent-red); }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 950px) {
+    body { height: auto; overflow: auto; }
+    .workspace { grid-template-columns: 1fr; overflow: visible; }
+    .roster-panel { max-height: 420px; border-right: none; border-bottom: 1px solid var(--border); }
+    .deploy-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title-area">
+    <h1>Imperial Regency <span>Viltitus</span></h1>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-pill">Treasury: <strong id="res-remaining">20,325</strong> R <span style="color:var(--text-muted);font-size:0.74rem;">(Spent: <span id="res-spent">0</span>)</span></div>
+    <div class="stat-pill">PS: <strong id="ps-remaining">95</strong>/100</div>
+    <div class="stat-pill">Dice: <strong id="dice-assigned-count">0</strong> / <span id="dice-total-count">0</span></div>
+    <div class="stat-pill info">Deploy Cap: <strong id="deploy-cap-used">0</strong>/20R</div>
+    <div class="stat-pill neg">Basing: <strong>-23</strong></div>
+    <div class="stat-pill neg">Food: <strong>-55</strong></div>
+    <div class="stat-pill neg">Health: <strong>-20</strong></div>
+    <div class="stat-pill pos">Shipyard Parts: <strong>57</strong></div>
+  </div>
+  <div class="actions-bar">
+    <button class="success" onclick="openSlotsModal()">Save Slots</button>
+    <button onclick="openJsonModal('plan')">JSON I/O</button>
+    <button class="danger" onclick="resetAll()">Clear All</button>
+    <button class="primary" onclick="openExportModal()">Export Turn (BBCode)</button>
+  </div>
+</header>
+
+<div class="workspace">
+  <!-- LEFT: Characters & Draggable Dice -->
+  <aside class="roster-panel">
+    <div class="panel-header">
+      <h2>Command Roster & Dice Pool</h2>
+      <input type="text" class="search-input" id="char-search" placeholder="Filter characters, dice type, or faction..." oninput="renderRoster()">
+    </div>
+    <div class="roster-list" id="roster-list"></div>
+  </aside>
+
+  <!-- RIGHT: Projects & Deployment -->
+  <main class="projects-panel">
+    <div class="category-tabs" id="category-tabs"></div>
+    <div class="projects-grid" id="projects-grid"></div>
+    <div class="deploy-container" id="deploy-container" style="display:none;"></div>
+  </main>
+</div>
+
+<!-- BBCode Export Modal -->
+<div class="modal-backdrop" id="export-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>Generated Turn Plan (Forum BBCode)</h3>
+      <button onclick="closeExportModal()">Close</button>
+    </div>
+    <textarea id="export-text" readonly></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button class="primary" onclick="copyExport()">Copy to Clipboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- JSON Import / Export Modal -->
+<div class="modal-backdrop" id="json-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3 id="json-modal-title">JSON Import / Export — Plan</h3>
+      <button onclick="closeJsonModal()">Close</button>
+    </div>
+
+    <div class="json-scope-bar">
+      <div class="scope-tabs">
+        <button class="scope-btn active" id="scope-btn-plan" onclick="setJsonScope('plan')">Plan</button>
+        <button class="scope-btn" id="scope-btn-tasks" onclick="setJsonScope('tasks')">Tasks</button>
+        <button class="scope-btn" id="scope-btn-people" onclick="setJsonScope('people')">People</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="exportCurrentJsonScope()">Export JSON</button>
+        <button class="success" onclick="triggerJsonFileImport()">Load .JSON File</button>
+        <input type="file" id="json-file-input" accept=".json,application/json" style="display:none;" onchange="handleJsonFileSelected(event)">
+      </div>
+    </div>
+
+    <textarea id="json-text" placeholder="Paste JSON here or click 'Export JSON' to view current data..."></textarea>
+
+    <div class="modal-footer">
+      <span id="json-scope-hint" style="font-size:0.76rem;color:var(--text-muted);">
+        Exports/imports turn assignments, parallel tasks, TIE queue, and fleet deployment.
+      </span>
+      <div class="modal-footer-group">
+        <button onclick="copyJsonText()">Copy JSON</button>
+        <button onclick="downloadJsonFile()">Download .JSON</button>
+        <button class="primary" onclick="applyJsonImport()">Apply Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Browser Cache Save Slots Modal -->
+<div class="modal-backdrop" id="slots-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>Saved Plan Slots (Browser Cache)</h3>
+      <button onclick="closeSlotsModal()">Close</button>
+    </div>
+
+    <div class="json-scope-bar">
+      <span style="font-size:0.78rem;color:var(--text-muted);">
+        Plans are stored locally in your browser's cache (<code>localStorage</code>) across reloads.
+      </span>
+      <button class="success" onclick="createNewPlanSlot()">+ New Slot</button>
+    </div>
+
+    <div class="slots-list" id="slots-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+// DATA: CHARACTERS & ORGANISATIONS
+// ==========================================
+const DEFAULT_CHARACTERS = [
+  {
+    id: "holt",
+    name: "Leona Holt",
+    rankTitle: "Grand Admiral Leona Holt (Tier 3)",
+    deployable: true,
+    faction: "Leona Loyalists",
+    desc: "+3 Free Dice, +5 Bonus to all dice, +10 Military, +5 Intelligence, +20 Imperial Navy projects.",
+    dice: ["Free", "Free", "Free"],
+    getBonus: (proj) => {
+      let b = 5;
+      if (proj.category === "Military") b += 10;
+      if (proj.category === "Intelligence") b += 5;
+      if (proj.subCategory === "Imperial Navy") b += 20;
+      return b;
+    }
+  },
+  {
+    id: "sloane",
+    name: "Rae Sloane",
+    rankTitle: "Admiral Rae Sloane (Tier 2)",
+    deployable: true,
+    faction: "Pragmatic Reformist",
+    desc: "+1 Military Die, +1 Free Die, +15 Bonus to Military, -10 Penalty to Intelligence.",
+    dice: ["Military", "Free"],
+    getBonus: (proj) => {
+      if (proj.category === "Military") return 15;
+      if (proj.category === "Intelligence") return -10;
+      return 0;
+    }
+  },
+  {
+    id: "versio",
+    name: "Garrick Versio",
+    rankTitle: "Admiral Garrick Versio (Tier 1)",
+    deployable: true,
+    faction: "True Believer",
+    desc: "+1 Military Die, +1 Intelligence Die, +11 Bonus to Intelligence, +10 Bonus to Military.",
+    dice: ["Military", "Intelligence"],
+    getBonus: (proj) => {
+      if (proj.category === "Intelligence") return 11;
+      if (proj.category === "Military") return 10;
+      return 0;
+    }
+  },
+  {
+    id: "pellaeon",
+    name: "Gilad Pellaeon",
+    deployable: false,
+    faction: "Dutiful Careerist",
+    desc: "+1 Military Die, +1 Administration Die, +5 Administration, +10 Military, +10 Imperial Navy projects.",
+    dice: ["Military", "Administration"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Administration") b += 5;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Navy") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "rogriss",
+    name: "Teren Rogriss",
+    rankTitle: "Admiral Teren Rogriss (Tier 2)",
+    deployable: true,
+    faction: "Dutiful Careerist",
+    desc: "+1 Military Die, +1 Infrastructure Die, +5 Infrastructure, +10 Military, +10 Imperial Navy projects.",
+    dice: ["Military", "Infrastructure"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Infrastructure") b += 5;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Navy") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "veers",
+    name: "Maximilian Veers",
+    rankTitle: "General Maximilian Veers (Tier 2)",
+    deployable: true,
+    faction: "Dutiful Careerist",
+    desc: "+1 Military Die, +10 Bonus to Military, +10 Bonus to Imperial Army projects.",
+    dice: ["Military"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Army") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "pryde",
+    name: "Enric Pryde",
+    deployable: false,
+    faction: "True Believer",
+    desc: "+1 Military Die, +10 Bonus to Military, +10 Bonus to Imperial Navy projects.",
+    dice: ["Military"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Navy") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "hata",
+    name: "Mari Hata",
+    deployable: false,
+    faction: "True Believer",
+    desc: "+1 Free Die, +10 Bonus to Intelligence and Administration.",
+    dice: ["Free"],
+    getBonus: (proj) => {
+      if (proj.category === "Intelligence" || proj.category === "Administration") return 10;
+      return 0;
+    }
+  },
+  {
+    id: "jade",
+    name: "Mara Jade",
+    deployable: false,
+    faction: "Pragmatic Reformers",
+    desc: "+1 Free Die, +11 Bonus to Intelligence and Military.",
+    dice: ["Free"],
+    getBonus: (proj) => {
+      if (proj.category === "Intelligence" || proj.category === "Military") return 11;
+      return 0;
+    }
+  },
+  {
+    id: "gideon",
+    name: "Gideon",
+    rankTitle: "Moff Gideon (Tier 1)",
+    deployable: true,
+    faction: "True Believer",
+    desc: "+1 Industry Die, +1 Services Die, +10 Bonus to Industry, +10 Bonus to Services.",
+    dice: ["Industry", "Services"],
+    getBonus: (proj) => {
+      if (proj.category === "Industry") return 10;
+      if (proj.category === "Services") return 10;
+      return 0;
+    }
+  },
+  {
+    id: "fel",
+    name: "Soontir Fel (& Maarek Stele)",
+    rankTitle: "Colonel Soontir Fel (Tier 1)",
+    deployable: true,
+    faction: "Pragmatic Reformist",
+    desc: "+2 Free Dice, +10 Bonus to Military Dice.",
+    dice: ["Free", "Free"],
+    getBonus: (proj) => (proj.category === "Military" ? 10 : 0)
+  },
+  {
+    id: "wessex",
+    name: "Lira Wessex",
+    deployable: false,
+    faction: "Dutiful Careerist",
+    desc: "+1 Military Die, +1 Industry Die, +10 Industry, -20 Military, +40 starship-related projects.",
+    dice: ["Military", "Industry"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Industry") b += 10;
+      if (proj.category === "Military") b -= 20;
+      if (proj.tags && proj.tags.includes("starship")) b += 40;
+      return b;
+    }
+  },
+  {
+    id: "elsbeth",
+    name: "Morgan Elsbeth",
+    deployable: false,
+    faction: "Sith Cultist",
+    desc: "+1 Military Die, +1 Industry Die, +11 Industry, -20 Military, +40 starfighter-related projects.",
+    dice: ["Military", "Industry"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Industry") b += 11;
+      if (proj.category === "Military") b -= 20;
+      if (proj.tags && proj.tags.includes("starfighter")) b += 40;
+      return b;
+    }
+  },
+  {
+    id: "gaarn",
+    name: "Roderick Gaarn",
+    rankTitle: "Admiral Roderick Gaarn (Tier 1)",
+    deployable: true,
+    faction: "Leona Loyalists",
+    desc: "+1 Intelligence Die, +1 Military Die, +5 Intelligence, +10 Military, +10 Imperial Navy projects.",
+    dice: ["Intelligence", "Military"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Intelligence") b += 5;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Navy") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "niovi",
+    name: "Gastos Niovi",
+    rankTitle: "General Gastos Niovi (Tier 1)",
+    deployable: true,
+    faction: "Leona Loyalists",
+    desc: "+1 Services Die, +1 Military Die, +5 Services, +10 Military, +10 Imperial Army projects.",
+    dice: ["Services", "Military"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Services") b += 5;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Army") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "oxtroe",
+    name: "Betl Oxtroe",
+    rankTitle: "Admiral Betl Oxtroe (Tier 1)",
+    deployable: true,
+    faction: "Pragmatic Reformist",
+    desc: "+1 Administration Die, +1 Military Die, +5 Administration, +10 Military, +10 Imperial Navy projects.",
+    dice: ["Administration", "Military"],
+    getBonus: (proj) => {
+      let b = 0;
+      if (proj.category === "Administration") b += 5;
+      if (proj.category === "Military") b += 10;
+      if (proj.subCategory === "Imperial Navy") b += 10;
+      return b;
+    }
+  },
+  {
+    id: "kdy",
+    name: "Kuat Drive Yards",
+    deployable: false,
+    faction: "Dutiful Careerist",
+    desc: "+1 Industry Die, +1 Infrastructure Die, +10 Industry, +10 Infrastructure.",
+    dice: ["Industry", "Infrastructure"],
+    getBonus: (proj) => {
+      if (proj.category === "Industry") return 10;
+      if (proj.category === "Infrastructure") return 10;
+      return 0;
+    }
+  },
+  {
+    id: "kuati",
+    name: "Kuati Diaspora",
+    deployable: false,
+    faction: "Leona Loyalists",
+    desc: "+1 Administration Die, +1 Infrastructure Die, +10 Administration, +10 Infrastructure.",
+    dice: ["Administration", "Infrastructure"],
+    getBonus: (proj) => {
+      if (proj.category === "Administration") return 10;
+      if (proj.category === "Infrastructure") return 10;
+      return 0;
+    }
+  }
+];
+
+function evaluateBonusRules(rules, proj) {
+  if (!Array.isArray(rules)) return 0;
+  let total = 0;
+  for (const r of rules) {
+    if (!r || typeof r.value !== "number") continue;
+    const matchAll = !r.category && !r.subCategory && !r.tag;
+    const matchCat = r.category && proj.category === r.category;
+    const matchSub = r.subCategory && proj.subCategory === r.subCategory;
+    const matchTag = r.tag && Array.isArray(proj.tags) && proj.tags.includes(r.tag);
+    if (matchAll || matchCat || matchSub || matchTag) {
+      total += r.value;
+    }
+  }
+  return total;
+}
+
+function attachBonusHelper(person) {
+  if (typeof person.getBonus === "function") return person;
+  return {
+    ...person,
+    getBonus: (proj) => evaluateBonusRules(person.bonusRules, proj)
+  };
+}
+
+let CHARACTERS = DEFAULT_CHARACTERS.map(attachBonusHelper);
+
+// ==========================================
+// DATA: PROJECTS & OPTIONS
+// ==========================================
+const DEFAULT_PROJECTS = [
+  // INFRASTRUCTURE
+  {
+    id: "coromul_col",
+    title: "Coromul Colonisation (Phase 1)",
+    category: "Infrastructure",
+    desc: "Turn subterranean caverns of Coromul into new housing and basing.",
+    options: [
+      { label: "Standard (0/75)", cost: 5, maxDice: 99, effects: "+5 Basing, -1 Logistics" },
+      { label: "Imperial (1 Die)", cost: 7, maxDice: 1, effects: "+5 Basing, -1 Logistics, Small Corruption" }
+    ]
+  },
+  {
+    id: "space_facility",
+    title: "Space Facility Construction (Phase 1)",
+    category: "Infrastructure",
+    desc: "Constructing space stations in orbit is less resource-heavy than on Ilum or Mechdol.",
+    options: [
+      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+5 Basing, -1 Logistics" },
+      { label: "Imperial (1 Die)", cost: 30, maxDice: 1, effects: "+5 Basing, -1 Logistics, Small Corruption" }
+    ]
+  },
+  {
+    id: "viltitus_palace",
+    title: "Viltitus Imperial Palace (Stage 1 of 3)",
+    category: "Infrastructure",
+    desc: "Build a palace worthy of the new capital of the Imperial Regency.",
+    options: [
+      { label: "Stage 1 (0/150)", cost: 15, maxDice: 99, effects: "+5 Basing, +2 Consumer Goods, -1 Cap Goods, -1 Logistics" },
+      { label: "Stage 2 (0/300)", cost: 15, maxDice: 99, effects: "+10 Basing, +5 Consumer Goods, -1 Menials, -3 Cap Goods, -2 Logistics" },
+      { label: "Stage 3 (0/450)", cost: 15, maxDice: 99, effects: "+15 Basing, +10 Consumer Goods, +4 Health, -1 Citizens, -3 Menials, -1 Strat, -3 Cap, -3 Log" }
+    ]
+  },
+  {
+    id: "viltitus_farmland",
+    title: "Develop Viltitus Farmland (Phase 1)",
+    category: "Infrastructure",
+    desc: "Clear lethal jungle on Viltitus to grow imported crops in its fertile soil.",
+    options: [
+      { label: "Standard (0/100)", cost: 5, maxDice: 99, effects: "-1 Menials, +5 Food, +1 Consumer Goods" },
+      { label: "Imperial (1 Die)", cost: 10, maxDice: 1, effects: "-1 Menials, +5 Food, +1 Consumer Goods, Small Corruption" }
+    ]
+  },
+  {
+    id: "agri_facilities",
+    title: "Develop Agricultural Facilities (Phase 1)",
+    category: "Infrastructure",
+    desc: "Construct environmentally sealed greenhouses on other worlds and space stations.",
+    options: [
+      { label: "Standard (0/200)", cost: 10, maxDice: 99, effects: "+7 Food, +2 Consumer Goods, -1 Cap, -1 Cit, -1 Log, -1 Basing" },
+      { label: "Imperial (1 Die)", cost: 40, maxDice: 1, effects: "+7 Food, +2 Consumer Goods, -1 Cap, -1 Cit, -1 Log, -1 Basing, Small Corruption" }
+    ]
+  },
+  {
+    id: "water_purification",
+    title: "Water Purification Plants (Stage 1 of 4)",
+    category: "Infrastructure",
+    desc: "Treat toxic planetary water to improve public health.",
+    options: [
+      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "+5 Health, -1 Cap Goods, -1 Menials, -1 Logistics, -3 Basing" }
+    ]
+  },
+  {
+    id: "surface_spaceports",
+    title: "Surface Spaceports (Phase 1)",
+    category: "Infrastructure",
+    desc: "Basic landing bays and hangars in safe zones to ease orbit-to-surface cargo.",
+    options: [
+      { label: "Standard (0/150)", cost: 15, maxDice: 99, effects: "+3 Logistics" }
+    ]
+  },
+  {
+    id: "capital_spaceports",
+    title: "Capital Spaceports (Stage 1 of 4)",
+    category: "Infrastructure",
+    desc: "Proper spaceport for capital-grade starships.",
+    options: [
+      { label: "Standard (0/300)", cost: 20, maxDice: 99, effects: "+12 Logistics, -1 Cap Goods, -1 Citizens, -2 Basing" }
+    ]
+  },
+  {
+    id: "imperial_monuments",
+    title: "Imperial Monuments (Stage 1 of 4)",
+    category: "Infrastructure",
+    desc: "Construct statues and signs of the New Order's superiority.",
+    options: [
+      { label: "Standard (0/100)", cost: 5, maxDice: 99, effects: "+3 PS, -1 Basing" },
+      { label: "Imperial (1 Die)", cost: 10, maxDice: 1, effects: "+4 PS, -1 Basing, Small Corruption" }
+    ]
+  },
+  {
+    id: "luxury_quarters",
+    title: "Luxury Quarters",
+    category: "Infrastructure",
+    desc: "Residences befitting Imperial officers and officials.",
+    options: [
+      { label: "Standard (0/200)", cost: 20, maxDice: 99, effects: "+5 PS, +5 Consumer Goods, -3 Basing" },
+      { label: "Imperial (1 Die)", cost: 80, maxDice: 1, effects: "+6 PS, +5 Consumer Goods, -3 Basing, Small Corruption" }
+    ]
+  },
+  {
+    id: "trantor_depot",
+    title: "Use Trantor-class Supertanker Fuel Depot",
+    category: "Infrastructure",
+    desc: "Massive ISD-sized station provided by Pentastar Alignment. Use for housing OR supplies.",
+    options: [
+      { label: "Standard: Housing (0/50)", cost: 10, maxDice: 99, effects: "+20 Basing" },
+      { label: "Imperial: Housing (1 Die)", cost: 10, maxDice: 1, effects: "+20 Basing, Small Corruption" },
+      { label: "Standard: Supplies (0/50)", cost: 5, maxDice: 99, effects: "+20 Logistics" },
+      { label: "Imperial: Supplies (1 Die)", cost: 5, maxDice: 1, effects: "+20 Logistics, Small Corruption" }
+    ]
+  },
+
+  // INDUSTRY
+  {
+    id: "civ_shipyards",
+    title: "Build Civilian Shipyards (Phase 1)",
+    category: "Industry",
+    tags: ["starship"],
+    desc: "Build freighters, passenger ships, and civilian vessels.",
+    options: [
+      { label: "Standard (0/200)", cost: 20, maxDice: 99, effects: "+12 Logistics, -1 Strat, -3 Cap, -3 Cit, -3 Basing" },
+      { label: "Imperial (1 Die)", cost: 80, maxDice: 1, effects: "+12 Logistics, -1 Strat, -3 Cap, -3 Cit, -3 Basing, Small Corruption" },
+      { label: "Rebuild (100/200) [1 Shipyard Part]", cost: 20, maxDice: 99, effects: "+12 Logistics, -1 Cap, -3 Cit, -3 Basing" }
+    ]
+  },
+  {
+    id: "surface_prospecting",
+    title: "Perform Surface Prospecting",
+    category: "Industry",
+    desc: "Survey planetary surfaces for valuable resource deposits.",
+    options: [
+      { label: "Coromul (0/100)", cost: 5, maxDice: 99, effects: "Discover Coromul surface deposits" },
+      { label: "Ilum (0/100)", cost: 5, maxDice: 99, effects: "Discover Ilum surface deposits" },
+      { label: "Mechdol (0/100)", cost: 5, maxDice: 99, effects: "Discover Mechdol surface deposits" },
+      { label: "Viltitus (0/100)", cost: 5, maxDice: 99, effects: "Discover Viltitus surface deposits" }
+    ]
+  },
+  {
+    id: "space_prospecting",
+    title: "Perform Space Prospecting",
+    category: "Industry",
+    desc: "Survey star systems for valuable space resource deposits.",
+    options: [
+      { label: "Coromul System (0/100)", cost: 5, maxDice: 99, effects: "Discover Coromul space deposits" },
+      { label: "Ilum System (0/100)", cost: 5, maxDice: 99, effects: "Discover Ilum space deposits" },
+      { label: "Mechdol System (0/100)", cost: 5, maxDice: 99, effects: "Discover Mechdol space deposits" },
+      { label: "Viltitus System (0/100)", cost: 5, maxDice: 99, effects: "Discover Viltitus space deposits" }
+    ]
+  },
+  {
+    id: "class5_droids",
+    title: "Class 5 Droid Factory",
+    category: "Industry",
+    desc: "Produce simple labour droids for dangerous/undesirable jobs.",
+    options: [
+      { label: "Standard (0/250)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +2 Cap Goods, +12 Menials, -1 Cit, -3 Basing" },
+      { label: "Imperial (1 Die)", cost: 100, maxDice: 1, effects: "+10 R/Turn, +2 Cap Goods, +12 Menials, -1 Cit, -3 Basing, Mod. Corruption" }
+    ]
+  },
+  {
+    id: "class2_droids",
+    title: "Class 2 Droid Factory",
+    category: "Industry",
+    desc: "Produce specialised engineering and tactical droids.",
+    options: [
+      { label: "Standard (0/250)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +10 Cap Goods, +4 Menials, -1 Cit, -3 Basing" },
+      { label: "Imperial (1 Die)", cost: 100, maxDice: 1, effects: "+10 R/Turn, +10 Cap Goods, +4 Menials, -1 Cit, -3 Basing, Mod. Corruption" }
+    ]
+  },
+  {
+    id: "medical_droids",
+    title: "Medical Droid Factory",
+    category: "Industry",
+    desc: "Produce auxiliary medical droids to assist human staff.",
+    options: [
+      { label: "Standard (0/250)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +4 Health, -1 Cap Goods, -1 Cit, -2 Basing" },
+      { label: "Imperial (1 Die)", cost: 100, maxDice: 1, effects: "+10 R/Turn, +4 Health, -1 Cap Goods, -1 Cit, -2 Basing, Mod. Corruption" }
+    ]
+  },
+  {
+    id: "durasteel_foundries",
+    title: "Durasteel Foundries (Stage 1 of 5)",
+    category: "Industry",
+    desc: "Massive industrial forges vital to Regency production.",
+    options: [
+      { label: "Standard: Stage 1 (0/100)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +1 Strat Goods, +2 Cap Goods, -2 Cit, -1 Basing" },
+      { label: "Imperial: Stage 1 (1 Die)", cost: 40, maxDice: 1, effects: "+10 R/Turn, +1 Strat Goods, +2 Cap Goods, -2 Cit, -1 Basing, Small Corruption" }
+    ]
+  },
+  {
+    id: "commercial_plants",
+    title: "Commercial Production Plants (Phase 1)",
+    category: "Industry",
+    desc: "Produce civilian consumer goods to ease severe shortages.",
+    options: [
+      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "+4 Consumer Goods, -1 Cap Goods, -1 Cit, -1 Basing" },
+      { label: "Imperial (1 Die)", cost: 20, maxDice: 1, effects: "+4 Consumer Goods, -1 Cap Goods, -1 Cit, -1 Basing, Small Corruption" }
+    ]
+  },
+
+  // INTELLIGENCE
+  {
+    id: "compnor_office",
+    title: "Set up COMPNOR Office",
+    category: "Intelligence",
+    desc: "Propaganda branch to steer public discourse.",
+    options: [
+      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+5 PS" }
+    ]
+  },
+  {
+    id: "isb_office",
+    title: "Set up ISB Office",
+    category: "Intelligence",
+    desc: "Internal security bureau to ensure loyalty and root out spies.",
+    options: [
+      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+3 PS" }
+    ]
+  },
+  {
+    id: "iis_office",
+    title: "Insert IIS Office",
+    category: "Intelligence",
+    desc: "Imperial Intelligence Service to track external enemies and warlords.",
+    options: [
+      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+3 PS" }
+    ]
+  },
+  {
+    id: "infiltration",
+    title: "Infiltration (Stage 1 of 5)",
+    category: "Intelligence",
+    desc: "Covertly infiltrate rival factions (Using >1 die on a single target heightens detection risk).",
+    options: [
+      "True Empire", "Corellian Empire", "Azure Imperium", "Zero Command", "Shadow Empire",
+      "Iron Empire", "Rothana Authority", "Eriadu Authority", "Pentastar Alignment",
+      "Lankin's Kingdom", "Greater Maldrood", "Zsinj's Empire", "Ciutric Hegemony",
+      "Imperial Insurgency", "New Republic", "Corporate Sector", "Megacorps",
+      "Hutts", "Black Sun", "Pyke Syndicate", "Hapes Consortium"
+    ].map(f => ({ label: `${f} (Stage 1) (0/100)`, cost: 10, maxDice: 99, effects: `Infiltrate ${f}` }))
+  },
+  {
+    id: "security_reviews",
+    title: "Security Reviews",
+    category: "Intelligence",
+    desc: "Ensure no leaks or spies compromise Project First Order.",
+    options: [
+      { label: "Standard (1 Die) (DC 60)", cost: 20, maxDice: 1, effects: "Counter-espionage check (DC 60)" }
+    ]
+  },
+
+  // SERVICES
+  {
+    id: "basic_medical",
+    title: "Basic Medical Facilities",
+    category: "Services",
+    desc: "Local treatment of illnesses and injuries for a healthier workforce.",
+    options: [
+      { label: "Standard (0/200)", cost: 15, maxDice: 99, effects: "+6 Health, -1 Cap Goods, -1 Cit, -1 Basing" },
+      { label: "Imperial (1 Die)", cost: 60, maxDice: 1, effects: "+6 Health, -1 Cap Goods, -1 Cit, -1 Basing, Small Corruption" }
+    ]
+  },
+  {
+    id: "food_rationing",
+    title: "Introduce Food Rationing",
+    category: "Services",
+    desc: "Increase rationing severity to save food at the cost of health and support.",
+    options: [
+      { label: "Moderate (1 Die)", cost: 0, maxDice: 1, effects: "+15 Food, -2 Health, -5 PS" },
+      { label: "Harsh (1 Die)", cost: 0, maxDice: 1, effects: "+30 Food, -5 Health, -10 PS" }
+    ]
+  },
+  {
+    id: "remove_rationing",
+    title: "Remove Rationing",
+    category: "Services",
+    desc: "Lift unpopular rationing policies to boost morale and quality of life.",
+    options: [
+      { label: "Remove Light Food Rationing (1 Die)", cost: 0, maxDice: 1, effects: "-15 Food, Improves Image/QoL" },
+      { label: "Remove Medical Rationing (1 Die)", cost: 0, maxDice: 1, effects: "-20 Health, Improves Image/QoL" }
+    ]
+  },
+  {
+    id: "childcare_program",
+    title: "Childcare Program",
+    category: "Services",
+    desc: "Free up parents in the expedition to take on productive jobs.",
+    options: [
+      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "+2 Citizens, -1 PS" },
+      { label: "Imperial (1 Die)", cost: 20, maxDice: 1, effects: "+2 Citizens, -1 PS, Small Corruption" }
+    ]
+  },
+  {
+    id: "tech_education",
+    title: "Technical Education Programs",
+    category: "Services",
+    desc: "Teach workers better equipment maintenance to free up hardware.",
+    options: [
+      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+1 Capital Goods" },
+      { label: "Imperial (1 Die)", cost: 30, maxDice: 1, effects: "+1 Capital Goods, Small Corruption" }
+    ]
+  },
+  {
+    id: "luxury_venues",
+    title: "Luxury Venues",
+    category: "Services",
+    desc: "Establishments suitable for Imperial elites to appease their station.",
+    options: [
+      { label: "Standard (0/150)", cost: 15, maxDice: 99, effects: "+5 PS, +2 Consumer Goods, -4 Food, -2 Basing" },
+      { label: "Imperial (1 Die)", cost: 45, maxDice: 1, effects: "+6 PS, +2 Consumer Goods, -4 Food, -2 Basing, Small Corruption" }
+    ]
+  },
+
+  // ADMINISTRATION
+  {
+    id: "hyperlane_beacons",
+    title: "Set-Up Hyperlane Route Beacons",
+    category: "Administration",
+    desc: "Set up beacons along hyperlanes for easier fleet access to and from the known galaxy.",
+    options: [
+      { label: "Bastion: Pentastar Alignment (0/200)", cost: 15, maxDice: 99, effects: "Hyperlane connection to Pentastar Alignment" },
+      { label: "Rago: Shadow Empire (0/200)", cost: 15, maxDice: 99, effects: "Hyperlane connection to Shadow Empire" },
+      { label: "Jakku: Neutral (0/200)", cost: 15, maxDice: 99, effects: "Hyperlane connection to Jakku" }
+    ]
+  },
+  {
+    id: "eclipse_databanks",
+    title: "Eclipse Databanks",
+    category: "Administration",
+    desc: "Decrypt Emperor Palpatine's secret locations, schematics, and vaults aboard the Eclipse.",
+    options: [
+      { label: "Location Aurek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Aurek" },
+      { label: "Location Besh (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Besh" },
+      { label: "Location Cherek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Cherek" },
+      { label: "Location Dorn (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Dorn" },
+      { label: "TIE Defender schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock TIE Defender schematics", isStarfighter: true },
+      { label: "TIE Advanced schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock TIE Advanced schematics", isStarfighter: true },
+      { label: "TIE Phantom schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock TIE Phantom schematics", isStarfighter: true },
+      { label: "Missile Boat schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock Missile Boat schematics", isStarfighter: true },
+      { label: "Vault Aurek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Aurek" },
+      { label: "Vault Besh (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Besh" },
+      { label: "Vault Cresh (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Cresh" },
+      { label: "Vault Cherek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Cherek" },
+      { label: "Vault Dorn (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Dorn" },
+      { label: "Vault Esk (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Esk" },
+      { label: "Vault Enth (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Enth" },
+      { label: "Vault Onith (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Onith" }
+    ]
+  },
+  {
+    id: "raising_heiress",
+    title: "Raising the Heiress",
+    category: "Administration",
+    desc: "Assign a mentor to raise Ederlathh Pallopides, Palpatine's great-niece and nominal Regency leader.",
+    options: [
+      { label: "Assign Mentor (1 Die)", cost: 0, maxDice: 1, effects: "Shapes the future Empress" }
+    ]
+  },
+  {
+    id: "political_payments",
+    title: "Political Payments",
+    category: "Administration",
+    desc: "Reward loyalty with large credit bonuses to shore up political support.",
+    options: [
+      { label: "Standard (1 Die)", cost: 100, maxDice: 1, effects: "+5 PS, Large rise in Corruption" }
+    ]
+  },
+  {
+    id: "fight_corruption",
+    title: "Fight Corruption",
+    category: "Administration",
+    desc: "Enforce Imperial law and regulations to purge corruption (Costs 3 PS per Die).",
+    options: [
+      { label: "Standard (DC 100) [3 PS/Die]", cost: 0, psCost: 3, maxDice: 99, effects: "Large reduction in Corruption (-3 PS/Die)" }
+    ]
+  },
+
+  // MILITARY (GENERAL)
+  {
+    id: "turbolaser_net",
+    title: "Turbolaser Ground Network (Phase 1)",
+    category: "Military",
+    desc: "Planetary defence batteries around key sites on Viltitus.",
+    options: [
+      { label: "Standard (0/100)", cost: 20, maxDice: 99, effects: "-1 Capital Goods, Ground/Atmo Defense" },
+      { label: "Imperial (1 Die)", cost: 40, maxDice: 1, effects: "-1 Capital Goods, Small Corruption" }
+    ]
+  },
+  {
+    id: "orbital_defences",
+    title: "Orbital Defences (Phase 1)",
+    category: "Military",
+    desc: "Armed orbital defence stations around Viltitus.",
+    options: [
+      { label: "Standard (0/150)", cost: 20, maxDice: 99, effects: "-1 Capital Goods, Orbital Garrison" },
+      { label: "Imperial (1 Die)", cost: 60, maxDice: 1, effects: "-1 Capital Goods, Small Corruption" }
+    ]
+  },
+  {
+    id: "primary_space_station",
+    title: "Space Station (Stage 1 of 5)",
+    category: "Military",
+    desc: "Primary defensive command station above Viltitus.",
+    options: [
+      { label: "Standard: Stage 1 (0/100)", cost: 20, maxDice: 99, effects: "-1 Cap Goods, -1 Cit, -1 Strat Goods" },
+      { label: "Imperial: Stage 1 (1 Die)", cost: 40, maxDice: 1, effects: "-1 Cap Goods, -1 Cit, -1 Strat Goods, Small Corruption" }
+    ]
+  },
+  {
+    id: "military_academy",
+    title: "Imperial Military Academy of Viltitus",
+    category: "Military",
+    desc: "Train new pilots, troopers, and officers to fill severe shortages.",
+    options: [
+      { label: "TIE Pilot Training (0/300) [Starfighter]", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing", isStarfighter: true },
+      { label: "Stormtrooper Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
+      { label: "Imperial Army Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
+      { label: "Imperial Navy Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
+      { label: "Commando Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" }
+    ]
+  },
+  {
+    id: "royal_guard_academy",
+    title: "Imperial Royal Guard Academy",
+    category: "Military",
+    desc: "Relocated from Yinchorr; establish pipeline for elite Royal Guards.",
+    options: [
+      { label: "Standard (0/150)", cost: 15, maxDice: 99, effects: "-1 Capital Goods, -1 Basing" }
+    ]
+  },
+  {
+    id: "dark_trooper_project",
+    title: "Dark Trooper Project",
+    category: "Military",
+    desc: "Set up Moff Gideon's Dark Trooper facilities on Viltitus.",
+    options: [
+      { label: "Standard (0/100)", cost: 20, maxDice: 99, effects: "-1 Capital Goods, -1 Basing" }
+    ]
+  },
+  {
+    id: "patrol_unknown",
+    title: "Patrol the Unknown Regions",
+    category: "Military",
+    desc: "Active patrols to map hazards and avoid ambushes.",
+    options: [
+      { label: "Standard (1 Die) (DC 30/50/80/120)", cost: 5, maxDice: 1, effects: "Map Unknown Regions & Threats" }
+    ]
+  },
+
+  // IMPERIAL ARMY
+  {
+    id: "army_review",
+    title: "Army Military Review",
+    category: "Military",
+    subCategory: "Imperial Army",
+    desc: "Review usage of the Imperial Army going forward.",
+    options: [
+      { label: "Standard (1 Die)", cost: 5, maxDice: 1, effects: "Army Doctrine Reform" }
+    ]
+  },
+  {
+    id: "stormtrooper_review",
+    title: "Stormtrooper Military Review",
+    category: "Military",
+    subCategory: "Imperial Army",
+    desc: "Review usage of the Stormtrooper Corps going forward.",
+    options: [
+      { label: "Standard (1 Die)", cost: 5, maxDice: 1, effects: "Stormtrooper Doctrine Reform" }
+    ]
+  },
+  {
+    id: "army_facilities",
+    title: "Imperial Army Training Facilities",
+    category: "Military",
+    subCategory: "Imperial Army",
+    desc: "Ranges and drill grounds for Imperial Army recruits.",
+    options: [
+      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "-3 Basing" }
+    ]
+  },
+  {
+    id: "stormtrooper_facilities",
+    title: "Stormtrooper Training Facilities",
+    category: "Military",
+    subCategory: "Imperial Army",
+    desc: "Ranges and drill grounds for Stormtrooper Corps.",
+    options: [
+      { label: "Standard (0/100)", cost: 15, maxDice: 99, effects: "-2 Basing" }
+    ]
+  },
+
+  // IMPERIAL NAVY
+  {
+    id: "navy_review",
+    title: "Navy Military Review",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    desc: "Review usage of the Imperial Navy going forward.",
+    options: [
+      { label: "Standard (1 Die)", cost: 0, maxDice: 1, effects: "Naval Doctrine Reform" }
+    ]
+  },
+  {
+    id: "supercapital_yard",
+    title: "Supercapital Yard",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    desc: "Required to finish the Eclipse SSD and repair Super Star Destroyers.",
+    options: [
+      { label: "Standard (0/1,500)", cost: 20, maxDice: 99, effects: "1 Supercapital Slot (-8 Strat, -20 Cap, -10 Cit, -10 Bas, -8 Log)" },
+      { label: "Imperial (1 Die)", cost: 600, maxDice: 1, effects: "1 Supercapital Slot (Gargantuan Corruption)" },
+      { label: "Rebuild (800/1,500) [8 Shipyard Parts]", cost: 20, maxDice: 99, effects: "1 Supercapital Slot (-4 Cap, -10 Cit, -10 Bas, -8 Log)" }
+    ]
+  },
+  {
+    id: "capital_yard",
+    title: "Capital Yard (Phase 1)",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    desc: "Build or service Star Destroyers and capital ships.",
+    options: [
+      { label: "Standard (0/600)", cost: 20, maxDice: 99, effects: "1 Capital Slot (-5 Strat, -10 Cap, -5 Cit, -5 Bas, -4 Log)" },
+      { label: "Imperial (1 Die)", cost: 240, maxDice: 1, effects: "1 Capital Slot (Massive Corruption)" },
+      { label: "Rebuild (400/600) [4 Shipyard Parts]", cost: 20, maxDice: 99, effects: "1 Capital Slot (-1 Strat, -2 Cap, -5 Cit, -5 Bas, -4 Log)" }
+    ]
+  },
+  {
+    id: "cruiser_yard",
+    title: "Cruiser Yard (Phase 1)",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    desc: "Build or service Victory SDs and Heavy Cruisers.",
+    options: [
+      { label: "Standard (0/300)", cost: 20, maxDice: 99, effects: "1 Cruiser Slot (-3 Strat, -6 Cap, -3 Cit, -5 Bas, -4 Log)" },
+      { label: "Imperial (1 Die)", cost: 120, maxDice: 1, effects: "1 Cruiser Slot (Large Corruption)" },
+      { label: "Rebuild (200/300) [2 Shipyard Parts]", cost: 20, maxDice: 99, effects: "1 Cruiser Slot (-1 Strat, -2 Cap, -3 Cit, -5 Bas, -4 Log)" }
+    ]
+  },
+  {
+    id: "escort_yard",
+    title: "Escort Yard (Phase 1)",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    desc: "Build or service up to four Escort-grade warships.",
+    options: [
+      { label: "Standard (0/200)", cost: 20, maxDice: 99, effects: "4 Escort Slots (-2 Strat, -4 Cap, -2 Cit, -5 Bas, -4 Log)" },
+      { label: "Imperial (1 Die)", cost: 80, maxDice: 1, effects: "4 Escort Slots (Moderate Corruption)" },
+      { label: "Rebuild (100/200) [1 Shipyard Part]", cost: 20, maxDice: 99, effects: "4 Escort Slots (-2 Strat, -4 Cap, -2 Cit, -5 Bas, -4 Log)" }
+    ]
+  },
+  {
+    id: "crew_imperialis",
+    title: "Crew the Imperialis",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    desc: "Find manpower to crew the mothballed Executor-class SSD Imperialis found in the Viltitus system.",
+    options: [
+      { label: "Standard (0/100)", cost: 5, maxDice: 99, effects: "Operational Executor SSD (-28 Citizens)" }
+    ]
+  },
+  {
+    id: "isd3_dev",
+    title: "ISD-III Development",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    desc: "Develop a next-generation Imperial Star Destroyer for the Imperial Regency.",
+    options: [
+      { label: "Standard (0/300)", cost: 15, maxDice: 99, effects: "Unlocks ISD-III Blueprint" }
+    ]
+  },
+  {
+    id: "shielded_interceptor",
+    title: "Shielded TIE Interceptor Development",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starfighter"],
+    desc: "Add deflector shields to TIE Interceptors to match New Republic fighters.",
+    options: [
+      { label: "Standard (0/200)", cost: 15, maxDice: 99, effects: "Unlocks Shielded TIE Interceptor" }
+    ]
+  },
+  {
+    id: "tie_facility_mod",
+    title: "TIE Construction Facility Modification (Stage 1 of 2)",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starfighter"],
+    desc: "Modify your two Zero Command TIE stations (10 sqds/week) to produce advanced TIE models.",
+    options: [
+      { label: "TIE Interceptor (0/200)", cost: 15, maxDice: 99, effects: "Converts station to TIE Interceptor production" },
+      { label: "TIE Bomber (0/200)", cost: 15, maxDice: 99, effects: "Converts station to TIE Bomber production" }
+    ]
+  },
+  {
+    id: "repair_queue",
+    title: "Repair Queue",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    requiresYardWarning: "Requires Completed Shipyard (Currently 0/0 Yards Available)",
+    desc: "Repair battle-damaged Death Squadron vessels once appropriate shipyards are built.",
+    options: [
+      { label: "Razor's Kiss (0/300) [1 Supercapital Yard/die]", cost: 10, maxDice: 99, effects: "Repairs Razor's Kiss SSD" },
+      { label: "Guardian (0/300) [1 Supercapital Yard/die]", cost: 10, maxDice: 99, effects: "Repairs Guardian SSD" },
+      { label: "ISDs (0/200, 20 Phases) [1 Capital Yard/die]", cost: 10, maxDice: 99, effects: "Repairs damaged ISDs" },
+      { label: "Cruisers (0/100, 27 Phases) [1 Cruiser Yard/die]", cost: 10, maxDice: 99, effects: "Repairs damaged Cruisers" },
+      { label: "Escorts (0/100, 30 Phases) [1 Escort Yard/die]", cost: 10, maxDice: 99, effects: "Repairs damaged Escorts" }
+    ]
+  },
+  {
+    id: "finishing_hulls",
+    title: "Finishing Partially-Built Hulls",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    tags: ["starship"],
+    requiresYardWarning: "Requires Completed Shipyard (Currently 0/0 Yards Available)",
+    desc: "Complete partially-built hulls in your fleet once matching shipyards are operational.",
+    options: [
+      { label: "Eclipse-class SSD (5,000 R, 3 Turns) [1 Supercapital Yard]", cost: 5000, maxDice: 1, effects: "Completes Eclipse SSD" },
+      { label: "ISD-II (11 Hulls) (375 R, 3 Turns) [1 Capital Yard]", cost: 375, maxDice: 1, effects: "Completes 1 ISD-II" },
+      { label: "ISD-I (11 Hulls) (375 R, 3 Turns) [1 Capital Yard]", cost: 375, maxDice: 1, effects: "Completes 1 ISD-I" },
+      { label: "Victory I-class SD (8 Hulls) (142 R, 2 Turns) [1 Cruiser Yard]", cost: 142, maxDice: 1, effects: "Completes 1 Victory-I" },
+      { label: "Victory II-class SD (8 Hulls) (125 R, 2 Turns) [1 Cruiser Yard]", cost: 125, maxDice: 1, effects: "Completes 1 Victory-II" },
+      { label: "Vindicator Heavy Cruiser (12 Hulls) (100 R, 1 Turn) [1 Cruiser Yard]", cost: 100, maxDice: 1, effects: "Completes 1 Vindicator" },
+      { label: "Immobiliser Heavy Cruiser (12 Hulls) (130 R, 1 Turn) [1 Cruiser Yard]", cost: 130, maxDice: 1, effects: "Completes 1 Immobiliser" },
+      { label: "Gladiator SD (2 Hulls) (85 R, 1 Turn) [1 Cruiser Yard]", cost: 85, maxDice: 1, effects: "Completes 1 Gladiator" },
+      { label: "Broadside Cruiser (2 Hulls) (85 R, 1 Turn) [1 Cruiser Yard]", cost: 85, maxDice: 1, effects: "Completes 1 Broadside" },
+      { label: "Carrack Light Cruiser Sqdn (2 Sqdns) (60 R, 1 Turn) [1 Escort Yard]", cost: 60, maxDice: 1, effects: "Completes 1 Carrack Sqdn" },
+      { label: "Arquitens Command Cruiser Sqdn (2 Sqdns) (50 R, 1 Turn) [1 Escort Yard]", cost: 50, maxDice: 1, effects: "Completes 1 Arquitens Command Sqdn" },
+      { label: "Arquitens Light Cruiser Sqdn (2 Sqdns) (40 R, 1 Turn) [1 Escort Yard]", cost: 40, maxDice: 1, effects: "Completes 1 Arquitens Light Sqdn" },
+      { label: "Lancer Frigate Sqdn (2 Sqdns) (47 R, 1 Turn) [1 Escort Yard]", cost: 47, maxDice: 1, effects: "Completes 1 Lancer Sqdn" },
+      { label: "Tartan Patrol Cruiser Sqdn (3 Sqdns) (42 R, 1 Turn) [1 Escort Yard]", cost: 42, maxDice: 1, effects: "Completes 1 Tartan Sqdn" },
+      { label: "Raider Corvette Sqdn (3 Sqdns) (18 R, 1 Turn) [1 Escort Yard]", cost: 18, maxDice: 1, effects: "Completes 1 Raider Sqdn" }
+    ]
+  },
+  {
+    id: "construction_queue",
+    title: "Construction Queue (Direct Order)",
+    category: "Military",
+    subCategory: "Imperial Navy",
+    isDirectOrder: true,
+    unitName: "10 TIE Fighter Squadrons",
+    unitCost: 36,
+    maxQty: 8,
+    desc: "Order construction of new starfighter squadrons directly using Resources (Does not require dice; up to 8 orders per turn)."
+  }
+];
+
+let PROJECTS = DEFAULT_PROJECTS.map(p => ({ ...p }));
+
+// ==========================================
+// DATA: DEPLOYMENT MISSIONS & FLEET POOL
+// ==========================================
+const MISSIONS = [
+  {
+    id: "gran_run",
+    title: "Great Gran Run Offensive",
+    faction: "Iron Empire",
+    duration: "Until Conclusion",
+    minCap: 20,
+    desc: "Grand Moff Adelhard wishes our aid in his conquest of the Great Gran Run to seize the shipyards at Oriolanis.",
+    reward: "100 Resources, 10 TIE Fighter Squadrons, 1 Stormtrooper Legion"
+  },
+  {
+    id: "nr_raid_shadow",
+    title: "New Republic Raiding (Shadow Empire)",
+    faction: "Shadow Empire",
+    duration: "2 Turns",
+    minCap: 20,
+    desc: "Grand Admiral Gallius Rax would like us to raid New Republic garrisons along his border.",
+    reward: "50 Resources, 3 Stockpiled Health, 10 Stockpiled Food"
+  },
+  {
+    id: "nr_raid_zero",
+    title: "New Republic Raiding (Zero Command)",
+    faction: "Zero Command",
+    duration: "2 Turns",
+    minCap: 20,
+    desc: "Grand Vizier Mas Amedda would like us to raid New Republic garrisons along his border.",
+    reward: "50 Resources, 1 Capital Goods, 1 Basing"
+  },
+  {
+    id: "core_garrison",
+    title: "Core Border Garrisons",
+    faction: "Azure Imperium",
+    duration: "3 Turns",
+    minCap: 20,
+    desc: "Grand Admiral Osted Wermis would like us to help garrison his Core borders with the New Republic.",
+    reward: "100 Resources, 1 Strategic Goods"
+  },
+  {
+    id: "inner_rim_garrison",
+    title: "Inner Rim Border Garrisons",
+    faction: "Azure Imperium",
+    duration: "3 Turns",
+    minCap: 20,
+    desc: "Grand Admiral Osted Wermis would like us to help garrison his Inner Rim borders with the New Republic.",
+    reward: "100 Resources, 1 Strategic Goods"
+  }
+];
+
+const AVAILABLE_SHIPS = [
+  { id: "isd1", name: "ISD-I", classType: "ISD", costR: 4, max: 18 },
+  { id: "isd2", name: "ISD-II", classType: "ISD", costR: 4, max: 10 },
+  { id: "tector", name: "Tector-class Star Destroyer", classType: "ISD", costR: 4, max: 2 },
+  { id: "interdictor", name: "Interdictor-class Star Destroyer", classType: "ISD", costR: 4, max: 2 },
+  { id: "venator", name: "Venator-class Star Destroyer", classType: "Cruiser", costR: 2, max: 4 },
+  { id: "vic1", name: "Victory I-class Star Destroyer", classType: "Cruiser", costR: 2, max: 11 },
+  { id: "vic2", name: "Victory II-class Star Destroyer", classType: "Cruiser", costR: 2, max: 7 },
+  { id: "immobiliser", name: "Immobiliser-class Heavy Cruiser", classType: "Cruiser", costR: 2, max: 2 },
+  { id: "gladiator", name: "Gladiator-class Star Destroyer", classType: "Cruiser", costR: 2, max: 12 },
+  { id: "broadside", name: "Broadside-class Cruiser", classType: "Cruiser", costR: 2, max: 3 },
+  { id: "vindicator", name: "Vindicator-class Heavy Cruiser", classType: "Cruiser", costR: 2, max: 12 },
+  { id: "dreadnought", name: "Dreadnought-class Heavy Cruiser", classType: "Cruiser", costR: 2, max: 8 },
+  { id: "carrack", name: "Carrack-class Light Cruiser Sqdn", classType: "Escort", costR: 1, max: 10 },
+  { id: "arq_cmd", name: "Arquitens-class Command Cruiser Sqdn", classType: "Escort", costR: 1, max: 5 },
+  { id: "arq_light", name: "Arquitens-class Light Cruiser Sqdn", classType: "Escort", costR: 1, max: 9 },
+  { id: "lancer", name: "Lancer-class Frigate Sqdn", classType: "Escort", costR: 1, max: 18 },
+  { id: "ton_falk", name: "Ton-Falk-class Escort Carrier Sqdn", classType: "Escort", costR: 1, max: 6 },
+  { id: "tartan", name: "Tartan-class Patrol Cruiser Sqdn", classType: "Escort", costR: 1, max: 12 },
+  { id: "raider", name: "Raider-class Corvette Sqdn", classType: "Escort", costR: 1, max: 20 }
+];
+
+// ==========================================
+// STATE MANAGEMENT (INSTANCE-BASED)
+// ==========================================
+let nextInstanceCounter = 1;
+
+function createDefaultInstances(projectList = PROJECTS) {
+  return projectList.map(p => ({
+    instanceId: `inst_${nextInstanceCounter++}`,
+    projectId: p.id,
+    isClone: false,
+    optionIndex: 0,
+    assignments: [] // Array of { charId, dieIndex, dieType }
+  }));
+}
+
+let state = {
+  activeTab: "All",
+  instances: createDefaultInstances(),
+  tieQueueQty: 0, // 0..8 for Construction Queue
+  deployment: {
+    missionId: null,
+    commanderId: null,
+    ships: {} // shipId -> count
+  }
+};
+
+AVAILABLE_SHIPS.forEach(s => { state.deployment.ships[s.id] = 0; });
+
+// ==========================================
+// HELPERS & VALIDATION
+// ==========================================
+function showToast(msg, isError = false) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.toggle("error", isError);
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3200);
+}
+
+function getProjectDef(projectId) {
+  return PROJECTS.find(p => p.id === projectId);
+}
+
+function getInstance(instanceId) {
+  return state.instances.find(i => i.instanceId === instanceId);
+}
+
+function isCharDeployed(charId) {
+  return state.deployment.commanderId === charId;
+}
+
+function isDieAssigned(charId, dieIndex) {
+  if (isCharDeployed(charId)) return true;
+  for (const inst of state.instances) {
+    if (inst.assignments.some(a => a.charId === charId && a.dieIndex === dieIndex)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function canAssignDie(dieType, project) {
+  if (dieType === "Free") return true;
+  return dieType === project.category;
+}
+
+function calculateDieBonus(char, project, optionIndex) {
+  if (!char || typeof char.getBonus !== "function") return 0;
+  const opt = project.options && project.options[optionIndex || 0];
+  const effectiveProj = {
+    ...project,
+    tags: [...(project.tags || []), ...(opt && opt.isStarfighter ? ["starfighter"] : [])]
+  };
+  return char.getBonus(effectiveProj);
+}
+
+function getDeployCapUsed() {
+  let totalR = 0;
+  AVAILABLE_SHIPS.forEach(s => {
+    totalR += (state.deployment.ships[s.id] || 0) * s.costR;
+  });
+  return totalR;
+}
+
+function updateTopStats() {
+  let totalSpent = state.tieQueueQty * 36;
+  let psSpent = 0;
+  let assignedDice = 0;
+
+  state.instances.forEach(inst => {
+    const p = getProjectDef(inst.projectId);
+    if (!p || p.isDirectOrder) return;
+    const opt = p.options[inst.optionIndex || 0] || { cost: 0, maxDice: 99 };
+    const count = inst.assignments.length;
+    assignedDice += count;
+    if (count > 0) {
+      totalSpent += (opt.cost || 0) * count;
+      if (opt.psCost) psSpent += opt.psCost * count;
+    }
+  });
+
+  if (state.deployment.commanderId) {
+    const cmdr = CHARACTERS.find(c => c.id === state.deployment.commanderId);
+    if (cmdr) assignedDice += cmdr.dice.length;
+  }
+
+  const totalDice = CHARACTERS.reduce((acc, c) => acc + c.dice.length, 0);
+  const remaining = 20325 - totalSpent;
+  const deployR = getDeployCapUsed();
+
+  document.getElementById("res-remaining").textContent = remaining.toLocaleString();
+  document.getElementById("res-spent").textContent = totalSpent.toLocaleString();
+  document.getElementById("ps-remaining").textContent = 95 - psSpent;
+  document.getElementById("dice-assigned-count").textContent = assignedDice;
+  document.getElementById("dice-total-count").textContent = totalDice;
+  document.getElementById("deploy-cap-used").textContent = deployR;
+}
+
+// ==========================================
+// RENDERING
+// ==========================================
+function renderRoster() {
+  const query = document.getElementById("char-search").value.toLowerCase();
+  const container = document.getElementById("roster-list");
+  container.innerHTML = "";
+
+  CHARACTERS.forEach(char => {
+    const matchesSearch =
+      char.name.toLowerCase().includes(query) ||
+      (char.faction || "").toLowerCase().includes(query) ||
+      (char.desc || "").toLowerCase().includes(query) ||
+      (char.dice || []).some(d => d.toLowerCase().includes(query));
+
+    if (!matchesSearch) return;
+
+    const deployed = isCharDeployed(char.id);
+    const card = document.createElement("div");
+    card.className = `char-card ${deployed ? 'deployed-lock' : ''}`;
+
+    const diceHTML = (char.dice || []).map((dieType, idx) => {
+      const assigned = isDieAssigned(char.id, idx);
+      return `
+        <div class="die-token die-${dieType} ${assigned ? 'assigned' : ''}"
+             draggable="${!assigned}"
+             ondragstart="handleDragStart(event, '${char.id}', ${idx}, '${dieType}')">
+          🎲 ${dieType}
+        </div>
+      `;
+    }).join("");
+
+    card.innerHTML = `
+      <div class="char-header">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span class="char-name">${char.name}</span>
+          ${deployed ? `<span class="deployed-badge">On Deployment</span>` : ''}
+        </div>
+        <span class="faction-tag">${char.faction || "Unaligned"}</span>
+      </div>
+      <div class="char-modifiers">${char.desc || ""}</div>
+      <div class="dice-tray">${diceHTML}</div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function renderTabs() {
+  const tabs = [
+    "All", "Assigned Only", "Infrastructure", "Industry", "Intelligence",
+    "Services", "Administration", "Military", "Imperial Army", "Imperial Navy", "Deployment"
+  ];
+  const container = document.getElementById("category-tabs");
+  container.innerHTML = tabs.map(tab => `
+    <button class="tab-btn ${tab === 'Deployment' ? 'deploy-tab' : ''} ${state.activeTab === tab ? 'active' : ''}" onclick="setTab('${tab}')">
+      ${tab === 'Deployment' ? '🚀 Deployment' : tab}
+    </button>
+  `).join("");
+}
+
+function setTab(tab) {
+  state.activeTab = tab;
+  renderTabs();
+  if (tab === "Deployment") {
+    document.getElementById("projects-grid").style.display = "none";
+    document.getElementById("deploy-container").style.display = "flex";
+    renderDeployment();
+  } else {
+    document.getElementById("deploy-container").style.display = "none";
+    document.getElementById("projects-grid").style.display = "grid";
+    renderProjects();
+  }
+}
+
+function renderProjects() {
+  const grid = document.getElementById("projects-grid");
+  grid.innerHTML = "";
+
+  const seenCounts = {};
+
+  state.instances.forEach(inst => {
+    const proj = getProjectDef(inst.projectId);
+    if (!proj) return;
+
+    seenCounts[proj.id] = (seenCounts[proj.id] || 0) + 1;
+    const instanceNum = seenCounts[proj.id];
+
+    const assignedList = inst.assignments || [];
+    const isActiveOrder = proj.isDirectOrder ? state.tieQueueQty > 0 : assignedList.length > 0;
+
+    if (state.activeTab === "Assigned Only" && !isActiveOrder) return;
+    if (state.activeTab !== "All" && state.activeTab !== "Assigned Only") {
+      if (state.activeTab === "Imperial Army" || state.activeTab === "Imperial Navy") {
+        if (proj.subCategory !== state.activeTab) return;
+      } else if (proj.category !== state.activeTab) {
+        return;
+      }
+    }
+
+    const card = document.createElement("div");
+    card.className = `project-card ${isActiveOrder ? 'has-dice' : ''} ${inst.isClone ? 'is-clone' : ''}`;
+
+    if (proj.isDirectOrder) {
+      const unitCost = proj.unitCost || 36;
+      const maxQty = proj.maxQty || 8;
+      const cost = state.tieQueueQty * unitCost;
+      card.innerHTML = `
+        <div class="proj-top">
+          <div class="proj-title">${proj.title}</div>
+          <span class="proj-cat-badge die-Military">${proj.subCategory || proj.category}</span>
+        </div>
+        <div class="proj-desc">${proj.desc || ""}</div>
+        <div class="order-controls">
+          <div>
+            <div style="font-size:0.84rem;font-weight:700;color:#fff;">${proj.unitName || "10 TIE Fighter Squadrons"}</div>
+            <div style="font-size:0.75rem;color:var(--accent-gold);">${unitCost} R each (Total: ${cost} R)</div>
+          </div>
+          <div class="qty-box">
+            <button class="qty-btn" onclick="changeTieQty(-1)">-</button>
+            <strong style="min-width:28px;text-align:center;">${state.tieQueueQty}/${maxQty}</strong>
+            <button class="qty-btn" onclick="changeTieQty(1)">+</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+      return;
+    }
+
+    const opts = proj.options && proj.options.length > 0
+      ? proj.options
+      : [{ label: "Standard", cost: 0, maxDice: 99, effects: "" }];
+    const optIdx = Math.min(inst.optionIndex || 0, opts.length - 1);
+    const currentOpt = opts[optIdx];
+    const totalProjCost = (currentOpt.cost || 0) * assignedList.length;
+
+    const optionsControlHTML = opts.length > 1
+      ? `<div class="option-row">
+           <select class="option-selector" onchange="changeOption('${inst.instanceId}', this.value)">
+             ${opts.map((o, i) => `<option value="${i}" ${i === optIdx ? 'selected' : ''}>${o.label} — ${o.cost} R/Die</option>`).join("")}
+           </select>
+           <button class="add-btn" title="Duplicate this task to work on another option simultaneously" onclick="duplicateInstance('${inst.instanceId}')">+ Add Option</button>
+         </div>`
+      : `<div style="font-size:0.8rem;color:#cbd5e1;font-weight:600;">${currentOpt.label} — <span style="color:var(--accent-gold);">${currentOpt.cost} R/Die</span></div>`;
+
+    const slotsHTML = assignedList.length === 0
+      ? `<div class="drop-placeholder">Drop <strong>${proj.category}</strong> or <strong>Free</strong> Die here</div>`
+      : assignedList.map((item, slotIdx) => {
+          const char = CHARACTERS.find(c => c.id === item.charId) || { name: item.charId };
+          const bonus = calculateDieBonus(char, proj, optIdx);
+          const bonusClass = bonus > 0 ? "bonus-pos" : (bonus < 0 ? "bonus-neg" : "bonus-zero");
+          const bonusText = bonus > 0 ? `+${bonus}` : `${bonus}`;
+          return `
+            <div class="assigned-slot">
+              <div class="assigned-info">
+                <span class="die-token die-${item.dieType}" style="padding:2px 6px;font-size:0.7rem;cursor:default;">${item.dieType}</span>
+                <strong>${char.name}</strong>
+                <span class="bonus-badge ${bonusClass}">${bonusText} Bonus</span>
+              </div>
+              <button class="remove-die-btn" title="Unassign Die" onclick="removeAssignment('${inst.instanceId}', ${slotIdx})">✕</button>
+            </div>
+          `;
+        }).join("");
+
+    card.innerHTML = `
+      <div class="proj-top">
+        <div class="proj-title">
+          ${proj.title}
+          ${instanceNum > 1 ? `<span class="clone-badge">Parallel #${instanceNum}</span>` : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="proj-cat-badge die-${proj.category}">${proj.subCategory || proj.category}</span>
+          ${inst.isClone ? `<button class="danger" style="padding:2px 6px;font-size:0.72rem;" title="Remove parallel task" onclick="removeInstance('${inst.instanceId}')">✕</button>` : ''}
+        </div>
+      </div>
+      <div class="proj-desc">${proj.desc || ""}</div>
+      ${optionsControlHTML}
+      <div class="proj-meta">
+        <span class="meta-tag cost">Cost: ${currentOpt.cost} R/die ${assignedList.length > 0 ? `(Total: ${totalProjCost} R)` : ''}</span>
+        <span class="meta-tag">Max Dice: ${currentOpt.maxDice === 99 ? 'Unlimited' : currentOpt.maxDice}</span>
+        <span class="meta-tag effect-pos">${currentOpt.effects || ""}</span>
+        ${proj.requiresYardWarning ? `<span class="meta-tag warn">⚠ ${proj.requiresYardWarning}</span>` : ''}
+      </div>
+      <div class="drop-zone"
+           ondragover="handleDragOver(event, '${inst.instanceId}')"
+           ondragleave="handleDragLeave(event)"
+           ondrop="handleDrop(event, '${inst.instanceId}')">
+        ${slotsHTML}
+      </div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+function renderDeployment() {
+  const container = document.getElementById("deploy-container");
+  const deployableChars = CHARACTERS.filter(c => c.deployable);
+  const capUsed = getDeployCapUsed();
+  const selectedMission = MISSIONS.find(m => m.id === state.deployment.missionId);
+
+  const missionsHTML = MISSIONS.map(m => {
+    const isSel = state.deployment.missionId === m.id;
+    return `
+      <div class="mission-card ${isSel ? 'selected' : ''}" onclick="selectMission('${m.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <strong style="color:#fff;font-size:0.92rem;">${m.title}</strong>
+          <span class="faction-tag">${m.faction} • ${m.duration}</span>
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">${m.desc}</div>
+        <div style="font-size:0.75rem;color:var(--accent-green);"><strong>Payment:</strong> ${m.reward} (Min ${m.minCap}R Fleet)</div>
+      </div>
+    `;
+  }).join("");
+
+  const shipsHTML = AVAILABLE_SHIPS.map(s => {
+    const count = state.deployment.ships[s.id] || 0;
+    return `
+      <tr>
+        <td>${s.name}</td>
+        <td><span class="faction-tag">${s.classType} (${s.costR}R)</span></td>
+        <td>${s.max}</td>
+        <td>
+          <input type="number" class="ship-input" min="0" max="${s.max}" value="${count}"
+                 onchange="updateShipCount('${s.id}', this.value)">
+        </td>
+        <td style="color:var(--accent-cyan);font-weight:700;">${count * s.costR}R</td>
+      </tr>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="deploy-banner">
+      <div>
+        <h3 style="font-size:1rem;color:#fff;margin-bottom:4px;">New Fleet Deployment</h3>
+        <div style="font-size:0.8rem;color:var(--text-muted);">
+          Available Capacity: <strong>20R</strong> (SSD = 10R, ISD = 4R, Cruiser = 2R, Escort Sqdn = 1R).
+          <em>Deploying a commander locks all of their dice from projects.</em>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:0.95rem;font-weight:700;color:${capUsed === 20 ? 'var(--accent-green)' : (capUsed > 20 ? 'var(--accent-red)' : 'var(--accent-cyan)')};">
+          Capacity Used: ${capUsed}R / 20R
+        </div>
+        <button class="danger" onclick="clearDeployment()">Reset Deployment</button>
+      </div>
+    </div>
+
+    <div class="deploy-grid">
+      <div>
+        <h4 style="font-size:0.85rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">1. Select Mission</h4>
+        ${missionsHTML}
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="project-card">
+          <h4 style="font-size:0.85rem;text-transform:uppercase;color:var(--text-muted);">2. Assign Commander</h4>
+          <select class="option-selector" onchange="assignDeployCommander(this.value)">
+            <option value="">-- No Commander Assigned --</option>
+            ${deployableChars.map(c => `<option value="${c.id}" ${state.deployment.commanderId === c.id ? 'selected' : ''}>${c.rankTitle}</option>`).join("")}
+          </select>
+          ${state.deployment.commanderId ? `<div style="font-size:0.75rem;color:var(--accent-cyan);">Commander's dice are locked for this turn.</div>` : ''}
+        </div>
+
+        <div class="project-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h4 style="font-size:0.85rem;text-transform:uppercase;color:var(--text-muted);">3. Assign Task Force Ships</h4>
+            ${selectedMission && capUsed < selectedMission.minCap ? `<span style="font-size:0.74rem;color:var(--accent-red);">Needs at least ${selectedMission.minCap}R</span>` : ''}
+          </div>
+          <div style="max-height:360px;overflow-y:auto;">
+            <table class="ship-table">
+              <thead>
+                <tr><th>Hull / Sqdn</th><th>Class</th><th>Avail</th><th>Deploy</th><th>Cap</th></tr>
+              </thead>
+              <tbody>${shipsHTML}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ==========================================
+// DUPLICATION & INTERACTIONS
+// ==========================================
+function duplicateInstance(sourceInstanceId) {
+  const sourceIdx = state.instances.findIndex(i => i.instanceId === sourceInstanceId);
+  if (sourceIdx === -1) return;
+  const source = state.instances[sourceIdx];
+  const proj = getProjectDef(source.projectId);
+
+  const usedIndices = new Set(
+    state.instances.filter(i => i.projectId === proj.id).map(i => i.optionIndex)
+  );
+  let nextOpt = (source.optionIndex + 1) % proj.options.length;
+  for (let i = 0; i < proj.options.length; i++) {
+    const candidate = (source.optionIndex + 1 + i) % proj.options.length;
+    if (!usedIndices.has(candidate)) {
+      nextOpt = candidate;
+      break;
+    }
+  }
+
+  const newInst = {
+    instanceId: `inst_${nextInstanceCounter++}`,
+    projectId: proj.id,
+    isClone: true,
+    optionIndex: nextOpt,
+    assignments: []
+  };
+
+  state.instances.splice(sourceIdx + 1, 0, newInst);
+  showToast(`Added parallel slot for ${proj.title}`);
+  refreshAll();
+}
+
+function removeInstance(instanceId) {
+  const idx = state.instances.findIndex(i => i.instanceId === instanceId);
+  if (idx === -1) return;
+  state.instances.splice(idx, 1);
+  refreshAll();
+}
+
+let draggedData = null;
+
+function handleDragStart(e, charId, dieIndex, dieType) {
+  draggedData = { charId, dieIndex, dieType };
+  e.dataTransfer.setData("text/plain", JSON.stringify(draggedData));
+}
+
+function handleDragOver(e, instanceId) {
+  e.preventDefault();
+  if (!draggedData) return;
+  const inst = getInstance(instanceId);
+  const proj = getProjectDef(inst.projectId);
+  const valid = canAssignDie(draggedData.dieType, proj);
+  e.currentTarget.classList.add(valid ? "drag-over" : "drag-invalid");
+}
+
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove("drag-over", "drag-invalid");
+}
+
+function handleDrop(e, instanceId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove("drag-over", "drag-invalid");
+
+  if (!draggedData) return;
+  const { charId, dieIndex, dieType } = draggedData;
+  draggedData = null;
+
+  const inst = getInstance(instanceId);
+  const proj = getProjectDef(inst.projectId);
+  const opt = proj.options[inst.optionIndex || 0];
+
+  if (!canAssignDie(dieType, proj)) {
+    showToast(`Cannot assign a ${dieType} Die to a ${proj.category} project!`, true);
+    return;
+  }
+
+  if (isDieAssigned(charId, dieIndex)) {
+    showToast("This die is already assigned or locked on deployment!", true);
+    return;
+  }
+
+  if (inst.assignments.length >= opt.maxDice) {
+    showToast(`"${opt.label}" allows a maximum of ${opt.maxDice} die!`, true);
+    return;
+  }
+
+  inst.assignments.push({ charId, dieIndex, dieType });
+  refreshAll();
+}
+
+function removeAssignment(instanceId, slotIdx) {
+  const inst = getInstance(instanceId);
+  if (!inst) return;
+  inst.assignments.splice(slotIdx, 1);
+  refreshAll();
+}
+
+function changeOption(instanceId, newIdx) {
+  const inst = getInstance(instanceId);
+  if (!inst) return;
+  const idx = parseInt(newIdx, 10);
+  inst.optionIndex = idx;
+  const maxAllowed = getProjectDef(inst.projectId).options[idx].maxDice;
+  if (inst.assignments.length > maxAllowed) {
+    inst.assignments = inst.assignments.slice(0, maxAllowed);
+    showToast(`Trimmed excess dice to fit ${maxAllowed}-die limit.`, true);
+  }
+  refreshAll();
+}
+
+function changeTieQty(delta) {
+  const queueDef = PROJECTS.find(p => p.isDirectOrder);
+  const maxQty = (queueDef && queueDef.maxQty) || 8;
+  const next = Math.max(0, Math.min(maxQty, state.tieQueueQty + delta));
+  state.tieQueueQty = next;
+  refreshAll();
+}
+
+function selectMission(missionId) {
+  state.deployment.missionId = state.deployment.missionId === missionId ? null : missionId;
+  refreshAll();
+}
+
+function assignDeployCommander(charId) {
+  state.deployment.commanderId = charId || null;
+  if (charId) {
+    let removedAny = false;
+    for (const inst of state.instances) {
+      const before = inst.assignments.length;
+      inst.assignments = inst.assignments.filter(a => a.charId !== charId);
+      if (inst.assignments.length < before) removedAny = true;
+    }
+    if (removedAny) {
+      showToast("Commander deployed — removed their dice from active projects.", true);
+    }
+  }
+  refreshAll();
+}
+
+function updateShipCount(shipId, val) {
+  const ship = AVAILABLE_SHIPS.find(s => s.id === shipId);
+  let num = parseInt(val, 10) || 0;
+  num = Math.max(0, Math.min(ship.max, num));
+
+  const oldVal = state.deployment.ships[shipId] || 0;
+  state.deployment.ships[shipId] = num;
+
+  if (getDeployCapUsed() > 20) {
+    state.deployment.ships[shipId] = oldVal;
+    showToast("Exceeds 20R Deployment Capacity!", true);
+  }
+  refreshAll();
+}
+
+function clearDeployment() {
+  state.deployment.missionId = null;
+  state.deployment.commanderId = null;
+  AVAILABLE_SHIPS.forEach(s => { state.deployment.ships[s.id] = 0; });
+  refreshAll();
+}
+
+function resetAll() {
+  state.instances = createDefaultInstances();
+  state.tieQueueQty = 0;
+  clearDeployment();
+  refreshAll();
+}
+
+function refreshAll() {
+  updateTopStats();
+  renderRoster();
+  if (state.activeTab === "Deployment") {
+    renderDeployment();
+  } else {
+    renderProjects();
+  }
+}
+
+// ==========================================
+// BROWSER CACHE SAVE SLOTS (LOCALSTORAGE)
+// ==========================================
+const PLAN_SLOTS_STORAGE_KEY = "imperial_regency_plan_slots_v1";
+const DEFAULT_SLOT_COUNT = 5;
+
+function createEmptySlots(count = DEFAULT_SLOT_COUNT) {
+  const slots = [];
+  for (let i = 1; i <= count; i++) {
+    slots.push({
+      slotId: `slot_${i}`,
+      name: `Plan Slot ${i}`,
+      savedAt: null,
+      plan: null
+    });
+  }
+  return slots;
+}
+
+function loadPlanSlotsFromCache() {
+  try {
+    const raw = localStorage.getItem(PLAN_SLOTS_STORAGE_KEY);
+    if (!raw) {
+      const initial = createEmptySlots(DEFAULT_SLOT_COUNT);
+      savePlanSlotsToCache(initial);
+      return initial;
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return createEmptySlots(DEFAULT_SLOT_COUNT);
+    }
+    return parsed.map((s, idx) => ({
+      slotId: s.slotId || `slot_${idx + 1}`,
+      name: s.name || `Plan Slot ${idx + 1}`,
+      savedAt: s.savedAt || null,
+      plan: s.plan || null
+    }));
+  } catch (err) {
+    console.warn("Failed to read plan slots from localStorage:", err);
+    return createEmptySlots(DEFAULT_SLOT_COUNT);
+  }
+}
+
+function savePlanSlotsToCache(slots) {
+  try {
+    localStorage.setItem(PLAN_SLOTS_STORAGE_KEY, JSON.stringify(slots));
+    return true;
+  } catch (err) {
+    showToast(`Could not save to browser cache: ${err.message}`, true);
+    return false;
+  }
+}
+
+let planSlots = loadPlanSlotsFromCache();
+
+function summarizePlan(planObj) {
+  if (!planObj) return "Empty slot";
+  let spent = (parseInt(planObj.tieQueueQty, 10) || 0) * 36;
+  let diceCount = 0;
+  const instances = Array.isArray(planObj.instances) ? planObj.instances : [];
+
+  instances.forEach(inst => {
+    const p = getProjectDef(inst.projectId);
+    const list = Array.isArray(inst.assignments) ? inst.assignments : [];
+    diceCount += list.length;
+    if (p && !p.isDirectOrder && list.length > 0) {
+      const opt = (p.options && p.options[inst.optionIndex || 0]) || { cost: 0 };
+      spent += (opt.cost || 0) * list.length;
+    }
+  });
+
+  const dep = planObj.deployment || {};
+  const cmdr = dep.commanderId ? CHARACTERS.find(c => c.id === dep.commanderId) : null;
+  if (cmdr && Array.isArray(cmdr.dice)) {
+    diceCount += cmdr.dice.length;
+  }
+  const mission = dep.missionId ? MISSIONS.find(m => m.id === dep.missionId) : null;
+
+  const parts = [`${spent.toLocaleString()} R spent`, `${diceCount} dice`];
+  if (mission) parts.push(`Mission: ${mission.title}`);
+  if (cmdr) parts.push(`Cmdr: ${cmdr.name}`);
+  return parts.join(" • ");
+}
+
+function openSlotsModal() {
+  planSlots = loadPlanSlotsFromCache();
+  renderSlotsModal();
+  document.getElementById("slots-modal").classList.add("open");
+}
+
+function closeSlotsModal() {
+  document.getElementById("slots-modal").classList.remove("open");
+}
+
+function renderSlotsModal() {
+  const container = document.getElementById("slots-list");
+  container.innerHTML = "";
+
+  planSlots.forEach((slot, idx) => {
+    const hasPlan = Boolean(slot.plan);
+    const dateStr = slot.savedAt ? new Date(slot.savedAt).toLocaleString() : "Never saved";
+    const summaryStr = summarizePlan(slot.plan);
+
+    const card = document.createElement("div");
+    card.className = `slot-card ${hasPlan ? 'filled' : ''}`;
+
+    card.innerHTML = `
+      <div class="slot-meta">
+        <div class="slot-title-row">
+          <input type="text" class="slot-name-input" value="${escapeHtmlAttr(slot.name)}"
+                 placeholder="Slot name..." onchange="renamePlanSlot(${idx}, this.value)">
+          <span class="faction-tag">${hasPlan ? `Saved: ${dateStr}` : "Empty"}</span>
+        </div>
+        <div style="font-size:0.76rem;color:${hasPlan ? '#cbd5e1' : 'var(--text-muted)'};">${summaryStr}</div>
+      </div>
+      <div class="slot-actions">
+        <button class="success" onclick="saveCurrentPlanToSlot(${idx})">${hasPlan ? "Overwrite" : "Save Here"}</button>
+        <button class="primary" ${hasPlan ? "" : "disabled style='opacity:0.4;cursor:not-allowed;'"} onclick="loadPlanFromSlot(${idx})">Load</button>
+        <button class="danger" ${hasPlan ? "" : "disabled style='opacity:0.4;cursor:not-allowed;'"} onclick="deletePlanSlot(${idx})">Clear</button>
+        ${planSlots.length > 1 ? `<button class="danger" title="Remove slot row" onclick="removePlanSlotRow(${idx})">✕</button>` : ""}
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function escapeHtmlAttr(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function createNewPlanSlot() {
+  const nextNum = planSlots.length + 1;
+  planSlots.push({
+    slotId: `slot_${Date.now()}_${nextNum}`,
+    name: `Plan Slot ${nextNum}`,
+    savedAt: null,
+    plan: null
+  });
+  savePlanSlotsToCache(planSlots);
+  renderSlotsModal();
+  showToast(`Created Plan Slot ${nextNum}.`);
+}
+
+function renamePlanSlot(index, newName) {
+  const slot = planSlots[index];
+  if (!slot) return;
+  const trimmed = String(newName || "").trim();
+  slot.name = trimmed || `Plan Slot ${index + 1}`;
+  savePlanSlotsToCache(planSlots);
+}
+
+function saveCurrentPlanToSlot(index) {
+  const slot = planSlots[index];
+  if (!slot) return;
+  const nameInput = document.querySelectorAll("#slots-list .slot-name-input")[index];
+  if (nameInput && nameInput.value.trim()) {
+    slot.name = nameInput.value.trim();
+  }
+  slot.plan = getSerializedPlan();
+  slot.savedAt = new Date().toISOString();
+  if (savePlanSlotsToCache(planSlots)) {
+    renderSlotsModal();
+    showToast(`Saved current plan to "${slot.name}".`);
+  }
+}
+
+function loadPlanFromSlot(index) {
+  const slot = planSlots[index];
+  if (!slot || !slot.plan) return;
+  applyPlanObject(slot.plan);
+  closeSlotsModal();
+  showToast(`Loaded "${slot.name}" from browser cache.`);
+}
+
+function deletePlanSlot(index) {
+  const slot = planSlots[index];
+  if (!slot) return;
+  slot.plan = null;
+  slot.savedAt = null;
+  savePlanSlotsToCache(planSlots);
+  renderSlotsModal();
+  showToast(`Cleared "${slot.name}".`);
+}
+
+function removePlanSlotRow(index) {
+  if (planSlots.length <= 1) return;
+  const removed = planSlots[index];
+  planSlots.splice(index, 1);
+  savePlanSlotsToCache(planSlots);
+  renderSlotsModal();
+  showToast(`Removed "${removed ? removed.name : "slot"}".`);
+}
+
+// ==========================================
+// JSON IMPORT / EXPORT (PLAN, TASKS, PEOPLE)
+// ==========================================
+let currentJsonScope = "plan";
+
+const JSON_SCOPE_META = {
+  plan: {
+    title: "JSON Import / Export — Plan",
+    hint: "Exports/imports turn assignments, parallel tasks, TIE queue, and fleet deployment.",
+    filename: "regency-plan.json"
+  },
+  tasks: {
+    title: "JSON Import / Export — Tasks",
+    hint: "Exports/imports project definitions, categories, options, costs, and dice limits.",
+    filename: "regency-tasks.json"
+  },
+  people: {
+    title: "JSON Import / Export — People",
+    hint: "Exports/imports characters & organisations, dice pools, deployment flags, and bonusRules.",
+    filename: "regency-people.json"
+  }
+};
+
+function openJsonModal(scope = "plan") {
+  setJsonScope(scope, true);
+  document.getElementById("json-modal").classList.add("open");
+}
+
+function closeJsonModal() {
+  document.getElementById("json-modal").classList.remove("open");
+}
+
+function setJsonScope(scope, autoPopulate = false) {
+  if (!JSON_SCOPE_META[scope]) return;
+  currentJsonScope = scope;
+
+  ["plan", "tasks", "people"].forEach(s => {
+    document.getElementById(`scope-btn-${s}`).classList.toggle("active", s === scope);
+  });
+
+  document.getElementById("json-modal-title").textContent = JSON_SCOPE_META[scope].title;
+  document.getElementById("json-scope-hint").textContent = JSON_SCOPE_META[scope].hint;
+
+  if (autoPopulate) {
+    exportCurrentJsonScope(false);
+  }
+}
+
+function getSerializedPlan() {
+  return {
+    type: "plan",
+    version: 1,
+    tieQueueQty: state.tieQueueQty,
+    instances: state.instances.map(inst => ({
+      instanceId: inst.instanceId,
+      projectId: inst.projectId,
+      isClone: Boolean(inst.isClone),
+      optionIndex: inst.optionIndex || 0,
+      assignments: (inst.assignments || []).map(a => ({
+        charId: a.charId,
+        dieIndex: a.dieIndex,
+        dieType: a.dieType
+      }))
+    })),
+    deployment: {
+      missionId: state.deployment.missionId || null,
+      commanderId: state.deployment.commanderId || null,
+      ships: { ...state.deployment.ships }
+    }
+  };
+}
+
+function getSerializedTasks() {
+  return {
+    type: "tasks",
+    version: 1,
+    tasks: PROJECTS.map(p => {
+      const copy = { ...p };
+      if (Array.isArray(p.options)) {
+        copy.options = p.options.map(o => ({ ...o }));
+      }
+      if (Array.isArray(p.tags)) {
+        copy.tags = [...p.tags];
+      }
+      return copy;
+    })
+  };
+}
+
+function getSerializedPeople() {
+  return {
+    type: "people",
+    version: 1,
+    people: CHARACTERS.map(c => {
+      const { getBonus, ...rest } = c;
+      return {
+        ...rest,
+        dice: Array.isArray(c.dice) ? [...c.dice] : [],
+        bonusRules: Array.isArray(c.bonusRules) ? c.bonusRules.map(r => ({ ...r })) : []
+      };
+    })
+  };
+}
+
+function exportCurrentJsonScope(notify = true) {
+  let payload;
+  if (currentJsonScope === "plan") payload = getSerializedPlan();
+  else if (currentJsonScope === "tasks") payload = getSerializedTasks();
+  else payload = getSerializedPeople();
+
+  document.getElementById("json-text").value = JSON.stringify(payload, null, 2);
+  if (notify) {
+    showToast(`Exported ${currentJsonScope} JSON.`);
+  }
+}
+
+function triggerJsonFileImport() {
+  document.getElementById("json-file-input").value = "";
+  document.getElementById("json-file-input").click();
+}
+
+function handleJsonFileSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById("json-text").value = String(reader.result || "");
+    applyJsonImport();
+  };
+  reader.onerror = () => showToast("Failed to read JSON file.", true);
+  reader.readAsText(file);
+}
+
+function downloadJsonFile() {
+  const text = document.getElementById("json-text").value;
+  if (!text.trim()) {
+    exportCurrentJsonScope(false);
+  }
+  const content = document.getElementById("json-text").value;
+  const blob = new Blob([content], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = JSON_SCOPE_META[currentJsonScope].filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Downloaded ${a.download}`);
+}
+
+function copyJsonText() {
+  const ta = document.getElementById("json-text");
+  if (!ta.value.trim()) {
+    exportCurrentJsonScope(false);
+  }
+  ta.select();
+  document.execCommand("copy");
+  showToast("Copied JSON to clipboard!");
+}
+
+function reconcileAssignmentsWithCurrentData() {
+  const charMap = new Map(CHARACTERS.map(c => [c.id, c]));
+  const usedDice = new Set();
+
+  if (state.deployment.commanderId && !charMap.has(state.deployment.commanderId)) {
+    state.deployment.commanderId = null;
+  }
+  if (state.deployment.commanderId) {
+    const cmdr = charMap.get(state.deployment.commanderId);
+    (cmdr.dice || []).forEach((_, idx) => usedDice.add(`${cmdr.id}:${idx}`));
+  }
+
+  state.instances.forEach(inst => {
+    const proj = getProjectDef(inst.projectId);
+    if (!proj || proj.isDirectOrder) {
+      inst.assignments = [];
+      return;
+    }
+    const opts = proj.options && proj.options.length > 0 ? proj.options : [{ cost: 0, maxDice: 99 }];
+    inst.optionIndex = Math.max(0, Math.min(opts.length - 1, parseInt(inst.optionIndex, 10) || 0));
+    const maxDice = opts[inst.optionIndex].maxDice || 99;
+
+    const validAssignments = [];
+    for (const a of (inst.assignments || [])) {
+      const char = charMap.get(a.charId);
+      if (!char) continue;
+      const dieIdx = parseInt(a.dieIndex, 10);
+      const dieType = (char.dice && char.dice[dieIdx]) || a.dieType;
+      if (!dieType) continue;
+      const key = `${char.id}:${dieIdx}`;
+      if (usedDice.has(key)) continue;
+      if (!canAssignDie(dieType, proj)) continue;
+      if (validAssignments.length >= maxDice) continue;
+
+      usedDice.add(key);
+      validAssignments.push({ charId: char.id, dieIndex: dieIdx, dieType });
+    }
+    inst.assignments = validAssignments;
+  });
+}
+
+function applyPlanObject(planObj) {
+  const incomingInstances = Array.isArray(planObj.instances) ? planObj.instances : [];
+  const baseInstances = createDefaultInstances();
+  const baseByProjId = new Map(baseInstances.map(i => [i.projectId, i]));
+  const seenBaseIds = new Set();
+  const rebuiltInstances = [];
+
+  for (const rawInst of incomingInstances) {
+    if (!rawInst || !rawInst.projectId) continue;
+    const projDef = getProjectDef(rawInst.projectId);
+    if (!projDef) continue;
+
+    let instanceId = rawInst.instanceId && typeof rawInst.instanceId === "string"
+      ? rawInst.instanceId
+      : `inst_${nextInstanceCounter++}`;
+    if (rebuiltInstances.some(x => x.instanceId === instanceId)) {
+      instanceId = `inst_${nextInstanceCounter++}`;
+    }
+
+    const isBaseFirst = !rawInst.isClone && !seenBaseIds.has(rawInst.projectId);
+    if (isBaseFirst) seenBaseIds.add(rawInst.projectId);
+
+    rebuiltInstances.push({
+      instanceId,
+      projectId: rawInst.projectId,
+      isClone: !isBaseFirst,
+      optionIndex: parseInt(rawInst.optionIndex, 10) || 0,
+      assignments: Array.isArray(rawInst.assignments)
+        ? rawInst.assignments.map(a => ({
+            charId: a.charId,
+            dieIndex: parseInt(a.dieIndex, 10),
+            dieType: a.dieType
+          }))
+        : []
+    });
+  }
+
+  PROJECTS.forEach(p => {
+    if (!seenBaseIds.has(p.id) && baseByProjId.has(p.id)) {
+      rebuiltInstances.push(baseByProjId.get(p.id));
+    }
+  });
+
+  state.instances = rebuiltInstances;
+  state.tieQueueQty = Math.max(0, Math.min(8, parseInt(planObj.tieQueueQty, 10) || 0));
+
+  const dep = planObj.deployment && typeof planObj.deployment === "object" ? planObj.deployment : {};
+  const validMission = MISSIONS.some(m => m.id === dep.missionId) ? dep.missionId : null;
+  state.deployment.missionId = validMission;
+  state.deployment.commanderId = dep.commanderId || null;
+
+  const nextShips = {};
+  let runningCap = 0;
+  AVAILABLE_SHIPS.forEach(s => {
+    const rawCount = dep.ships && dep.ships[s.id] !== undefined ? parseInt(dep.ships[s.id], 10) : 0;
+    let clamped = Math.max(0, Math.min(s.max, isNaN(rawCount) ? 0 : rawCount));
+    if (runningCap + clamped * s.costR > 20) {
+      clamped = Math.max(0, Math.floor((20 - runningCap) / s.costR));
+    }
+    runningCap += clamped * s.costR;
+    nextShips[s.id] = clamped;
+  });
+  state.deployment.ships = nextShips;
+
+  reconcileAssignmentsWithCurrentData();
+  refreshAll();
+}
+
+function applyJsonImport() {
+  const raw = document.getElementById("json-text").value.trim();
+  if (!raw) {
+    showToast("JSON input is empty.", true);
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    showToast(`Invalid JSON: ${err.message}`, true);
+    return;
+  }
+
+  const detectedScope = parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.type
+    ? parsed.type
+    : currentJsonScope;
+
+  if (detectedScope === "tasks") {
+    const list = Array.isArray(parsed) ? parsed : parsed.tasks;
+    if (!Array.isArray(list) || list.length === 0) {
+      showToast("Tasks JSON must be a non-empty array or contain a 'tasks' array.", true);
+      return;
+    }
+    for (const t of list) {
+      if (!t || !t.id || !t.title || !t.category) {
+        showToast("Each task requires 'id', 'title', and 'category'.", true);
+        return;
+      }
+      if (!t.isDirectOrder && (!Array.isArray(t.options) || t.options.length === 0)) {
+        showToast(`Task "${t.title}" requires a non-empty 'options' array.`, true);
+        return;
+      }
+    }
+
+    PROJECTS = list.map(t => ({
+      ...t,
+      options: Array.isArray(t.options) ? t.options.map(o => ({
+        label: o.label || "Standard",
+        cost: Number(o.cost) || 0,
+        maxDice: o.maxDice !== undefined ? Number(o.maxDice) : 99,
+        effects: o.effects || "",
+        ...(o.psCost ? { psCost: Number(o.psCost) } : {}),
+        ...(o.isStarfighter ? { isStarfighter: true } : {})
+      })) : undefined,
+      tags: Array.isArray(t.tags) ? [...t.tags] : undefined
+    }));
+
+    const existingByProj = new Map();
+    state.instances.forEach(inst => {
+      if (getProjectDef(inst.projectId)) {
+        if (!existingByProj.has(inst.projectId)) existingByProj.set(inst.projectId, []);
+        existingByProj.get(inst.projectId).push({
+          ...inst,
+          instanceId: inst.instanceId || `inst_${nextInstanceCounter++}`,
+          assignments: Array.isArray(inst.assignments) ? [...inst.assignments] : []
+        });
+      }
+    });
+
+    const nextInstances = [];
+    PROJECTS.forEach(p => {
+      if (existingByProj.has(p.id)) {
+        nextInstances.push(...existingByProj.get(p.id));
+      } else {
+        nextInstances.push({
+          instanceId: `inst_${nextInstanceCounter++}`,
+          projectId: p.id,
+          isClone: false,
+          optionIndex: 0,
+          assignments: []
+        });
+      }
+    });
+    state.instances = nextInstances;
+
+    const queueDef = PROJECTS.find(p => p.isDirectOrder);
+    state.tieQueueQty = Math.max(0, Math.min((queueDef && queueDef.maxQty) || 8, parseInt(state.tieQueueQty, 10) || 0));
+
+    reconcileAssignmentsWithCurrentData();
+    setJsonScope("tasks", false);
+    refreshAll();
+    closeJsonModal();
+    showToast(`Imported ${PROJECTS.length} tasks.`);
+    return;
+  }
+
+  if (detectedScope === "people") {
+    const list = Array.isArray(parsed) ? parsed : parsed.people;
+    if (!Array.isArray(list)) {
+      showToast("People JSON must be an array or contain a 'people' array.", true);
+      return;
+    }
+    for (const person of list) {
+      if (!person || !person.id || !person.name || !Array.isArray(person.dice)) {
+        showToast("Each person requires 'id', 'name', and a 'dice' array.", true);
+        return;
+      }
+    }
+
+    const defaultById = new Map(DEFAULT_CHARACTERS.map(c => [c.id, c]));
+    CHARACTERS = list.map(person => {
+      const base = {
+        id: String(person.id),
+        name: String(person.name),
+        rankTitle: person.rankTitle ? String(person.rankTitle) : String(person.name),
+        deployable: Boolean(person.deployable),
+        faction: person.faction ? String(person.faction) : "Unaligned",
+        desc: person.desc ? String(person.desc) : "",
+        dice: person.dice.map(d => String(d)),
+        bonusRules: Array.isArray(person.bonusRules) ? person.bonusRules.map(r => ({ ...r })) : []
+      };
+      if ((!base.bonusRules || base.bonusRules.length === 0) && defaultById.has(base.id)) {
+        base.getBonus = defaultById.get(base.id).getBonus;
+      }
+      return attachBonusHelper(base);
+    });
+
+    reconcileAssignmentsWithCurrentData();
+    setJsonScope("people", false);
+    refreshAll();
+    closeJsonModal();
+    showToast(`Imported ${CHARACTERS.length} people.`);
+    return;
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    showToast("Plan JSON must be an object.", true);
+    return;
+  }
+
+  applyPlanObject(parsed);
+  setJsonScope("plan", false);
+  closeJsonModal();
+  showToast("Imported turn plan.");
+}
+
+// ==========================================
+// EXPORT TO FORUM BBCODE
+// ==========================================
+function openExportModal() {
+  let lines = ["[b]Turn Orders[/b]\n"];
+  let totalCost = state.tieQueueQty * 36;
+  let anyAction = false;
+
+  const grouped = {};
+  state.instances.forEach(inst => {
+    const p = getProjectDef(inst.projectId);
+    if (!p || p.isDirectOrder) return;
+    const list = inst.assignments;
+    if (list.length === 0) return;
+    anyAction = true;
+
+    const cat = p.subCategory ? `${p.category} — ${p.subCategory}` : p.category;
+    if (!grouped[cat]) grouped[cat] = [];
+
+    const opt = p.options[inst.optionIndex || 0];
+    const projCost = opt.cost * list.length;
+    totalCost += projCost;
+
+    const diceDesc = list.map(item => {
+      const char = CHARACTERS.find(c => c.id === item.charId);
+      const bonus = calculateDieBonus(char, p, inst.optionIndex);
+      const bStr = bonus >= 0 ? `+${bonus}` : `${bonus}`;
+      return `${char ? char.name : item.charId} (${item.dieType} Die, ${bStr})`;
+    }).join(", ");
+
+    grouped[cat].push(`-[X] [b]${p.title}[/b] — ${opt.label} [${projCost} R]\n  • Assigned: ${diceDesc}`);
+  });
+
+  if (state.tieQueueQty > 0) {
+    anyAction = true;
+    const cat = "Military — Imperial Navy";
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(`-[X] [b]Construction Queue[/b] — ${state.tieQueueQty}x (10 TIE Fighter Squadrons) [${state.tieQueueQty * 36} R]`);
+  }
+
+  for (const cat in grouped) {
+    lines.push(`[u]${cat}[/u]`);
+    lines.push(grouped[cat].join("\n"));
+    lines.push("");
+  }
+
+  const d = state.deployment;
+  const deployedShips = AVAILABLE_SHIPS.filter(s => (d.ships[s.id] || 0) > 0);
+  if (d.missionId || d.commanderId || deployedShips.length > 0) {
+    anyAction = true;
+    const mission = MISSIONS.find(m => m.id === d.missionId);
+    const cmdr = CHARACTERS.find(c => c.id === d.commanderId);
+    lines.push(`[u]Fleet Deployment (${getDeployCapUsed()}R / 20R)[/u]`);
+    lines.push(`-[X] [b]Mission:[/b] ${mission ? `${mission.title} (${mission.faction})` : "None Selected"}`);
+    lines.push(`  • [b]Commander:[/b] ${cmdr ? cmdr.rankTitle : "None"}`);
+    if (deployedShips.length > 0) {
+      const shipList = deployedShips.map(s => `${d.ships[s.id]}x ${s.name} (${d.ships[s.id] * s.costR}R)`).join(", ");
+      lines.push(`  • [b]Task Force:[/b] ${shipList}`);
+    }
+    lines.push("");
+  }
+
+  if (!anyAction) {
+    lines.push("No orders or deployments assigned yet.");
+  } else {
+    lines.push(`[b]Total Resources Spent:[/b] ${totalCost.toLocaleString()} R (Remaining: ${(20325 - totalCost).toLocaleString()} R)`);
+  }
+
+  document.getElementById("export-text").value = lines.join("\n");
+  document.getElementById("export-modal").classList.add("open");
+}
+
+function closeExportModal() {
+  document.getElementById("export-modal").classList.remove("open");
+}
+
+function copyExport() {
+  const ta = document.getElementById("export-text");
+  ta.select();
+  document.execCommand("copy");
+  showToast("Copied BBCode to clipboard!");
+}
+
+// Initial Render
+renderTabs();
+refreshAll();
+</script>
+</body>
+</html>
