@@ -779,7 +779,7 @@
 <div class="modal-backdrop" id="export-modal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3>Generated Turn Plan (Forum BBCode)</h3>
+      <h3>Generated Turn Plan</h3>
       <button onclick="closeExportModal()">Close</button>
     </div>
     <textarea id="export-text" readonly></textarea>
@@ -3059,7 +3059,7 @@ function applyJsonImport() {
 // EXPORT TO FORUM BBCODE
 // ==========================================
 function openExportModal() {
-  let lines = ["[b]Turn Orders[/b]\n"];
+  let lines = ["[X] Plan : Turn Orders"];
   let totalCost = state.tieQueueQty * 36;
   let anyAction = false;
 
@@ -3085,20 +3085,19 @@ function openExportModal() {
       return `${char ? char.name : item.charId} (${item.dieType} Die, ${bStr})`;
     }).join(", ");
 
-    grouped[cat].push(`-[X] [b]${p.title}[/b] — ${opt.label} [${projCost} R]\n  • Assigned: ${diceDesc}`);
+    grouped[cat].push(`--[X] ${p.title} — ${opt.label} [${projCost} R] | Assigned: ${diceDesc}`);
   });
 
   if (state.tieQueueQty > 0) {
     anyAction = true;
     const cat = "Military — Imperial Navy";
     if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(`-[X] [b]Construction Queue[/b] — ${state.tieQueueQty}x (10 TIE Fighter Squadrons) [${state.tieQueueQty * 36} R]`);
+    grouped[cat].push(`--[X] Construction Queue — ${state.tieQueueQty}x (10 TIE Fighter Squadrons) [${state.tieQueueQty * 36} R]`);
   }
 
   for (const cat in grouped) {
-    lines.push(`[u]${cat}[/u]`);
+    lines.push(`-[X] ${cat}`);
     lines.push(grouped[cat].join("\n"));
-    lines.push("");
   }
 
   const d = state.deployment;
@@ -3107,20 +3106,25 @@ function openExportModal() {
     anyAction = true;
     const mission = MISSIONS.find(m => m.id === d.missionId);
     const cmdr = CHARACTERS.find(c => c.id === d.commanderId);
-    lines.push(`[u]Fleet Deployment (${getDeployCapUsed()}R / 20R)[/u]`);
-    lines.push(`-[X] [b]Mission:[/b] ${mission ? `${mission.title} (${mission.faction})` : "None Selected"}`);
-    lines.push(`  • [b]Commander:[/b] ${cmdr ? cmdr.rankTitle : "None"}`);
+    lines.push(`-[X] Fleet Deployment (${getDeployCapUsed()}R / 20R)`);
+    lines.push(`--[X] Mission: ${mission ? `${mission.title} (${mission.faction})` : "None Selected"}`);
+    lines.push(`--[X] Commander: ${cmdr ? cmdr.rankTitle : "None"}`);
     if (deployedShips.length > 0) {
       const shipList = deployedShips.map(s => `${d.ships[s.id]}x ${s.name} (${d.ships[s.id] * s.costR}R)`).join(", ");
-      lines.push(`  • [b]Task Force:[/b] ${shipList}`);
+      lines.push(`--[X] Task Force: ${shipList}`);
     }
-    lines.push("");
   }
 
   if (!anyAction) {
-    lines.push("No orders or deployments assigned yet.");
+    lines.push("-[] No orders or deployments assigned yet.");
   } else {
-    lines.push(`[b]Total Resources Spent:[/b] ${totalCost.toLocaleString()} R (Remaining: ${(20325 - totalCost).toLocaleString()} R)`);
+    const displayedRemaining = parseInt(
+      (document.getElementById("res-remaining").textContent || "0").replace(/,/g, ""),
+      10
+    ) || 0;
+    const baseTreasury = displayedRemaining + totalCost;
+    lines.push(`-[X] Resources Summary`);
+    lines.push(`--[X] Total Spent: ${totalCost.toLocaleString()} R | Remaining: ${(baseTreasury - totalCost).toLocaleString()} R`);
   }
 
   document.getElementById("export-text").value = lines.join("\n");
