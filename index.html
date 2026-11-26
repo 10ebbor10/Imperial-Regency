@@ -1183,6 +1183,8 @@ let BASE_STATS = {
   strategicGoods: 0,
   shipyardParts: 0,
   beskar: 0,
+  deploymentCapUsed: 0,
+  deploymentCapMax: 20,
   availableYards: {
     supercapital: { active: 0, total: 0 },
     capital: { active: 0, total: 0 },
@@ -1521,12 +1523,26 @@ function calculateDieBonus(char, project, optionIndex) {
   return char.getBonus(effectiveProj);
 }
 
+function getDeployCapMax() {
+  const cap = parseInt(BASE_STATS && BASE_STATS.deploymentCapMax, 10);
+  return !isNaN(cap) && cap > 0 ? cap : 20;
+}
+
+function getLockedDeployCap() {
+  const baseUsed = parseInt(BASE_STATS && BASE_STATS.deploymentCapUsed, 10);
+  return !isNaN(baseUsed) && baseUsed >= 0 ? baseUsed : 0;
+}
+
 function getDeployCapUsed() {
   let totalR = 0;
   AVAILABLE_SHIPS.forEach(s => {
     totalR += (state.deployment.ships[s.id] || 0) * (s.costR || 0);
   });
   return totalR;
+}
+
+function getEffectiveDeployCapUsed() {
+  return getLockedDeployCap() + getDeployCapUsed();
 }
 
 function isImperialOption(opt) {
@@ -1797,7 +1813,8 @@ function updateTopStats() {
   const t = outcome.totals;
 
   const totalDice = CHARACTERS.reduce((acc, c) => acc + ((c.dice && c.dice.length) || 0), 0);
-  const deployR = getDeployCapUsed();
+  const deployR = getEffectiveDeployCapUsed();
+  const deployMax = getDeployCapMax();
 
   const remainingReserve = (BASE_STATS.resourcesReserve || 0) - t.resourcesSpent;
   const projectedTurnR = (BASE_STATS.resourcesTurn || 0) + t.resourcesTurn;
@@ -1841,7 +1858,7 @@ function updateTopStats() {
       Dice: <strong>${outcome.assignedDice}/${totalDice}</strong>
     </div>
     <div class="stat-pill info">
-      Deploy: <strong>${deployR}/20R</strong>
+      Deploy: <strong>${deployR}/${deployMax}R</strong>
     </div>
     <div class="stat-pill ${projectedBasing < 0 ? 'neg' : 'pos'}">
       Basing: <strong>${formatSignedNum(projectedBasing)}</strong>
@@ -2622,7 +2639,10 @@ function renderProjects() {
 function renderDeployment() {
   const container = document.getElementById("deploy-container");
   const deployableChars = CHARACTERS.filter(c => c.deployable);
-  const capUsed = getDeployCapUsed();
+  const lockedCap = getLockedDeployCap();
+  const shipCap = getDeployCapUsed();
+  const capUsed = getEffectiveDeployCapUsed();
+  const maxCap = getDeployCapMax();
   const selectedMission = MISSIONS.find(m => m.id === state.deployment.missionId);
 
   const missionsHTML = MISSIONS.length === 0
@@ -2662,13 +2682,13 @@ function renderDeployment() {
       <div>
         <h3 style="font-size:1rem;color:#fff;margin-bottom:4px;">New Fleet Deployment</h3>
         <div style="font-size:0.8rem;color:var(--text-muted);">
-          Available Capacity: <strong>20R</strong> (SSD = 10R, ISD = 4R, Cruiser = 2R, Escort Sqdn = 1R).
+          Max Capacity: <strong>${maxCap}R</strong> • Locked at Turn Start: <strong>${lockedCap}R</strong> • New Ships Assigned: <strong>${shipCap}R</strong> (SSD = 10R, ISD = 4R, Cruiser = 2R, Escort Sqdn = 1R).
           <em>Deploying a commander locks all of their dice from projects.</em>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:0.95rem;font-weight:700;color:${capUsed === 20 ? 'var(--accent-green)' : (capUsed > 20 ? 'var(--accent-red)' : 'var(--accent-cyan)')};">
-          Capacity Used: ${capUsed}R / 20R
+        <div style="font-size:0.95rem;font-weight:700;color:${capUsed === maxCap ? 'var(--accent-green)' : (capUsed > maxCap ? 'var(--accent-red)' : 'var(--accent-cyan)')};">
+          Capacity Used: ${capUsed}R / ${maxCap}R
         </div>
         <button class="danger" onclick="clearDeployment()">Reset Deployment</button>
       </div>
@@ -2881,9 +2901,10 @@ function updateShipCount(shipId, val) {
   const oldVal = state.deployment.ships[shipId] || 0;
   state.deployment.ships[shipId] = num;
 
-  if (getDeployCapUsed() > 20) {
+  const maxCap = getDeployCapMax();
+  if (getEffectiveDeployCapUsed() > maxCap) {
     state.deployment.ships[shipId] = oldVal;
-    showToast("Exceeds 20R Deployment Capacity!", true);
+    showToast(`Exceeds ${maxCap}R Deployment Capacity (including ${getLockedDeployCap()}R locked)!`, true);
   }
   refreshAll();
 }
@@ -3340,16 +3361,19 @@ function applyPlanObject(planObj) {
   state.deployment.missionId = validMission;
   state.deployment.commanderId = dep.commanderId || null;
 
+  const maxCap = getDeployCapMax();
+  const lockedCap = getLockedDeployCap();
+  const availableForShips = Math.max(0, maxCap - lockedCap);
   const nextShips = {};
-  let runningCap = 0;
+  let runningShipCap = 0;
   if (AVAILABLE_SHIPS.length > 0) {
     AVAILABLE_SHIPS.forEach(s => {
       const rawCount = dep.ships && dep.ships[s.id] !== undefined ? parseInt(dep.ships[s.id], 10) : 0;
       let clamped = Math.max(0, Math.min(s.max, isNaN(rawCount) ? 0 : rawCount));
-      if (runningCap + clamped * s.costR > 20) {
-        clamped = Math.max(0, Math.floor((20 - runningCap) / s.costR));
+      if (runningShipCap + clamped * s.costR > availableForShips) {
+        clamped = Math.max(0, Math.floor((availableForShips - runningShipCap) / s.costR));
       }
-      runningCap += clamped * s.costR;
+      runningShipCap += clamped * s.costR;
       nextShips[s.id] = clamped;
     });
   } else if (dep.ships && typeof dep.ships === "object") {
@@ -3524,12 +3548,13 @@ function buildExportBbCode(mode = "standard") {
   }
 
   const d = state.deployment;
+  const maxCap = getDeployCapMax();
   const deployedShips = AVAILABLE_SHIPS.filter(s => (d.ships[s.id] || 0) > 0);
   if (d.missionId || d.commanderId || deployedShips.length > 0) {
     anyAction = true;
     const mission = MISSIONS.find(m => m.id === d.missionId);
     const cmdr = CHARACTERS.find(c => c.id === d.commanderId);
-    lines.push(`-[X] Fleet Deployment (${getDeployCapUsed()}R / 20R)`);
+    lines.push(`-[X] Fleet Deployment (${getEffectiveDeployCapUsed()}R / ${maxCap}R)`);
     lines.push(`--[X] Mission: ${mission ? `${mission.title} (${mission.faction})` : "None Selected"}`);
     lines.push(`--[X] Commander: ${cmdr ? `${cmdr.rankTitle} [${cmdr.faction || "Unaligned"}]` : "None"}`);
     if (deployedShips.length > 0) {

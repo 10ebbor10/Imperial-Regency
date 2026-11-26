@@ -23,7 +23,7 @@
     "strategicGoods": 17,
     "shipyardParts": 55,
     "beskar": 10,
-    "deploymentCapUsed": 2,
+    "deploymentCapUsed": 20,
     "deploymentCapMax": 22,
     "availableYards": {
       "supercapital": { "active": 0, "total": 0 },
