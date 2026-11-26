@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Death Squadron Planner</title>
+<title>Imperial Regency — Master Turn & Deployment Planner</title>
 <style>
   :root {
     --bg-dark: #0b0e14;
@@ -38,27 +38,35 @@
   header {
     background: var(--bg-panel);
     border-bottom: 1px solid var(--border);
-    padding: 10px 18px;
+    padding: 10px 16px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
     gap: 10px;
     z-index: 10;
   }
 
+  .title-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 2px;
+  }
+
   .title-area h1 {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     letter-spacing: 1px;
     text-transform: uppercase;
     color: #fff;
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
   }
 
   .title-area span {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     background: var(--accent-red);
     color: white;
     padding: 2px 6px;
@@ -68,41 +76,63 @@
 
   .stats-bar {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     flex-wrap: wrap;
     align-items: center;
+    flex: 1;
+    min-width: 260px;
   }
 
   .stat-pill {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    padding: 5px 10px;
+    padding: 4px 8px;
     border-radius: 6px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    flex-wrap: wrap;
   }
 
   .stat-pill strong { color: var(--accent-gold); }
   .stat-pill.neg strong { color: var(--accent-red); }
   .stat-pill.pos strong { color: var(--accent-green); }
   .stat-pill.info strong { color: var(--accent-cyan); }
+  .stat-pill.warn strong { color: var(--accent-orange); }
+
+  .stat-sub {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+
+  .stat-delta-pos {
+    color: #34d399;
+    font-weight: 700;
+    font-size: 0.72rem;
+  }
+
+  .stat-delta-neg {
+    color: #f87171;
+    font-weight: 700;
+    font-size: 0.72rem;
+  }
 
   .actions-bar {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
+    align-items: center;
   }
 
   button {
     background: var(--bg-card);
     color: var(--text-main);
     border: 1px solid var(--border);
-    padding: 6px 12px;
+    padding: 6px 11px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 600;
     transition: all 0.15s;
   }
@@ -112,6 +142,8 @@
   button.primary:hover { background: #2563eb; }
   button.success { background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.5); color: #34d399; }
   button.success:hover { background: rgba(16, 185, 129, 0.28); }
+  button.accent { background: rgba(168, 85, 247, 0.18); border-color: rgba(168, 85, 247, 0.5); color: #d8b4fe; }
+  button.accent:hover { background: rgba(168, 85, 247, 0.28); }
   button.danger { color: var(--accent-red); border-color: rgba(239,68,68,0.4); }
   button.danger:hover { background: rgba(239,68,68,0.15); }
   button.add-btn {
@@ -301,6 +333,9 @@
   .tab-btn.deploy-tab.active {
     color: var(--accent-cyan);
   }
+  .tab-btn.summary-tab.active {
+    color: #34d399;
+  }
 
   .projects-grid {
     flex: 1;
@@ -357,6 +392,19 @@
     border-radius: 4px;
     font-weight: 700;
   }
+
+  .prob-chip {
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 700;
+    background: rgba(168, 85, 247, 0.18);
+    color: #e9d5ff;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .prob-chip:hover { background: rgba(168, 85, 247, 0.3); }
 
   .proj-cat-badge {
     font-size: 0.68rem;
@@ -501,7 +549,7 @@
     font-size: 0.9rem;
   }
 
-  /* Deployment View Styling */
+  /* Deployment & Summary View Styling */
   .deploy-container {
     flex: 1;
     overflow-y: auto;
@@ -569,7 +617,97 @@
     text-align: center;
   }
 
-  /* Modal for BBCode Export, JSON I/O, and Save Slots */
+  /* Final Summary Tab Styling */
+  .summary-controls-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .roll-control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .roll-slider {
+    width: 150px;
+    accent-color: var(--accent-blue);
+    cursor: pointer;
+  }
+
+  .roll-number-input {
+    width: 72px;
+    background: var(--bg-dark);
+    color: #fff;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .summary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+    gap: 10px;
+  }
+
+  .summary-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-stat-card.changed {
+    border-color: rgba(59, 130, 246, 0.55);
+  }
+
+  .summary-stat-name {
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .summary-stat-values {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.86rem;
+    flex-wrap: wrap;
+  }
+
+  .summary-action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .summary-action-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Modals */
   .modal-backdrop {
     display: none;
     position: fixed;
@@ -594,6 +732,7 @@
     flex-direction: column;
     gap: 14px;
     max-height: 90vh;
+    overflow-y: auto;
   }
 
   .modal textarea {
@@ -704,6 +843,79 @@
     align-items: center;
   }
 
+  /* Probability Calculator Controls & Results */
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 10px;
+  }
+
+  .calc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
+  .calc-field label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+
+  .calc-input {
+    width: 100%;
+    background: var(--bg-dark);
+    color: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 0.84rem;
+  }
+
+  .phase-outcome-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .phase-outcome-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .phase-outcome-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .prob-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .prob-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+    border-radius: 999px;
+    transition: width 0.2s ease;
+  }
+
   .toast {
     position: fixed;
     bottom: 20px;
@@ -739,21 +951,13 @@
   <div class="title-area">
     <h1>Imperial Regency <span>Viltitus</span></h1>
   </div>
-  <div class="stats-bar">
-    <div class="stat-pill">Treasury: <strong id="res-remaining">20,325</strong> R <span style="color:var(--text-muted);font-size:0.74rem;">(Spent: <span id="res-spent">0</span>)</span></div>
-    <div class="stat-pill">PS: <strong id="ps-remaining">95</strong>/100</div>
-    <div class="stat-pill">Dice: <strong id="dice-assigned-count">0</strong> / <span id="dice-total-count">0</span></div>
-    <div class="stat-pill info">Deploy Cap: <strong id="deploy-cap-used">0</strong>/20R</div>
-    <div class="stat-pill neg">Basing: <strong>-23</strong></div>
-    <div class="stat-pill neg">Food: <strong>-55</strong></div>
-    <div class="stat-pill neg">Health: <strong>-20</strong></div>
-    <div class="stat-pill pos">Shipyard Parts: <strong>57</strong></div>
-  </div>
+  <div class="stats-bar" id="top-stats-bar"></div>
   <div class="actions-bar">
+    <button class="accent" onclick="openProbModal()">Prob. Calc</button>
     <button class="success" onclick="openSlotsModal()">Save Slots</button>
     <button onclick="openJsonModal('plan')">JSON I/O</button>
     <button class="danger" onclick="resetAll()">Clear All</button>
-    <button class="primary" onclick="openExportModal()">Export Turn (BBCode)</button>
+    <button class="primary" onclick="openExportModal('standard')">Export Turn (BBCode)</button>
   </div>
 </header>
 
@@ -767,7 +971,7 @@
     <div class="roster-list" id="roster-list"></div>
   </aside>
 
-  <!-- RIGHT: Projects & Deployment -->
+  <!-- RIGHT: Projects, Deployment & Final Summary -->
   <main class="projects-panel">
     <div class="category-tabs" id="category-tabs"></div>
     <div class="projects-grid" id="projects-grid"></div>
@@ -775,12 +979,74 @@
   </main>
 </div>
 
+<!-- Success Probability Calculator Modal -->
+<div class="modal-backdrop" id="prob-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>Success Probability Calculator</h3>
+      <button onclick="closeProbModal()">Close</button>
+    </div>
+
+    <div class="calc-field">
+      <label>Load From Assigned Action / Project (Optional)</label>
+      <select class="option-selector" id="calc-source-select" onchange="loadCalculatorFromInstance(this.value)">
+        <option value="">-- Custom / Manual Calculation --</option>
+      </select>
+    </div>
+
+    <div class="calc-grid">
+      <div class="calc-field">
+        <label>Number of d100 Dice</label>
+        <input type="number" class="calc-input" id="calc-dice-count" min="0" max="20" value="1" oninput="recomputeProbModal()">
+      </div>
+      <div class="calc-field">
+        <label>Base Target / Phase 1 Cost</label>
+        <input type="number" class="calc-input" id="calc-base-target" min="1" value="100" oninput="recomputeProbModal()">
+      </div>
+      <div class="calc-field">
+        <label>Phases to Evaluate</label>
+        <input type="number" class="calc-input" id="calc-phase-count" min="1" max="10" value="3" oninput="recomputeProbModal()">
+      </div>
+      <div class="calc-field">
+        <label>Phased Project Mode</label>
+        <select class="option-selector" id="calc-phased-mode" onchange="recomputeProbModal()">
+          <option value="true">Phased (Recursive Next Phase)</option>
+          <option value="false">Single Target Only</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="calc-field">
+      <label>Explicit Phase Targets (Comma-separated, optional — recursive if fewer than Phases)</label>
+      <input type="text" class="calc-input" id="calc-explicit-phases" placeholder="e.g. 150, 300, 450 (leave blank for recursive step)" oninput="recomputeProbModal()">
+    </div>
+
+    <div class="calc-field">
+      <label>Die Bonuses (Comma-separated, one per die; extra/missing dice default to 0)</label>
+      <input type="text" class="calc-input" id="calc-bonuses" value="+0" placeholder="e.g. +0, +5, +10" oninput="recomputeProbModal()">
+    </div>
+
+    <div id="calc-summary" style="font-size:0.82rem;color:#cbd5e1;background:rgba(0,0,0,0.22);padding:8px 12px;border-radius:6px;border:1px solid var(--border);"></div>
+
+    <div class="phase-outcome-list" id="calc-results"></div>
+  </div>
+</div>
+
 <!-- BBCode Export Modal -->
 <div class="modal-backdrop" id="export-modal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3>Generated Turn Plan</h3>
+      <h3 id="export-modal-title">Generated Turn Plan (Forum BBCode)</h3>
       <button onclick="closeExportModal()">Close</button>
+    </div>
+    <div class="json-scope-bar">
+      <div class="scope-tabs">
+        <button class="scope-btn active" id="export-mode-standard" onclick="setExportMode('standard')">Standard Export</button>
+        <button class="scope-btn" id="export-mode-rolls" onclick="setExportMode('rolls')">Export with Rolls</button>
+      </div>
+      <span id="export-mode-hint" style="font-size:0.76rem;color:var(--text-muted);">
+        Includes character factions, bonuses, costs, and deployment.
+      </span>
     </div>
     <textarea id="export-text" readonly></textarea>
     <div style="display:flex;justify-content:flex-end;gap:10px;">
@@ -847,6 +1113,33 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ==========================================
+// DATA: EMPIRE BASE STATS
+// ==========================================
+const BASE_STATS = {
+  resourcesTurn: 0,
+  resourcesReserve: 20325,
+  psCurrent: 95,
+  psMax: 100,
+  unrest: 4,
+  corruption: 0,
+  basing: -23,
+  citizens: 415,
+  menials: 3,
+  logistics: 33,
+  food: -55,
+  foodStockpile: 330,
+  foodRationing: "Light Rationing",
+  health: -20,
+  healthStockpile: 100,
+  healthRationing: "Rationing",
+  consumerGoods: -38,
+  capitalGoods: 33,
+  strategicGoods: 18,
+  shipyardParts: 57,
+  beskar: 10
+};
+
 // ==========================================
 // DATA: CHARACTERS & ORGANISATIONS
 // ==========================================
@@ -1879,18 +2172,19 @@ function createDefaultInstances(projectList = PROJECTS) {
     projectId: p.id,
     isClone: false,
     optionIndex: 0,
-    assignments: [] // Array of { charId, dieIndex, dieType }
+    assignments: []
   }));
 }
 
 let state = {
   activeTab: "All",
+  assumedRoll: 50,
   instances: createDefaultInstances(),
-  tieQueueQty: 0, // 0..8 for Construction Queue
+  tieQueueQty: 0,
   deployment: {
     missionId: null,
     commanderId: null,
-    ships: {} // shipId -> count
+    ships: {}
   }
 };
 
@@ -1952,38 +2246,672 @@ function getDeployCapUsed() {
   return totalR;
 }
 
-function updateTopStats() {
-  let totalSpent = state.tieQueueQty * 36;
-  let psSpent = 0;
+function isImperialOption(opt) {
+  if (!opt) return false;
+  return opt.isImperial === true || /\bimperial\b/i.test(opt.label || "");
+}
+
+function getImperialCorruptionInfo(opt) {
+  if (!isImperialOption(opt)) return null;
+
+  const sourceText = `${opt.corruption || ""} ${opt.effects || ""}`;
+  if (/\bgargantuan\b/i.test(sourceText)) {
+    return { tier: "Gargantuan", faces: 15, label: "1D15 Corruption" };
+  }
+  if (/\bmassive\b/i.test(sourceText)) {
+    return { tier: "Massive", faces: 10, label: "1D10 Corruption" };
+  }
+  if (/\blarge\b/i.test(sourceText)) {
+    return { tier: "Large", faces: 5, label: "1D5 Corruption" };
+  }
+  if (/\bmod(?:erate|\.)?\b/i.test(sourceText)) {
+    return { tier: "Moderate", faces: 3, label: "1D3 Corruption" };
+  }
+  if (/\bsmall\b/i.test(sourceText)) {
+    return { tier: "Small", faces: null, label: "1 Corruption" };
+  }
+  return { tier: "Small", faces: null, label: "1 Corruption" };
+}
+
+// ==========================================
+// STAT EFFECT PARSER & ROLL-BASED DELTA ENGINE
+// ==========================================
+function createEmptyDeltas() {
+  return {
+    resourcesSpent: 0,
+    resourcesTurn: 0,
+    psCurrent: 0,
+    unrest: 0,
+    corruption: 0,
+    basing: 0,
+    citizens: 0,
+    menials: 0,
+    logistics: 0,
+    food: 0,
+    foodStockpile: 0,
+    health: 0,
+    healthStockpile: 0,
+    consumerGoods: 0,
+    capitalGoods: 0,
+    strategicGoods: 0,
+    shipyardParts: 0,
+    beskar: 0
+  };
+}
+
+function addDeltasInto(target, delta) {
+  if (!delta) return;
+  for (const key of Object.keys(target)) {
+    target[key] += Number(delta[key]) || 0;
+  }
+}
+
+function parseEffectsStringToDeltas(effectsStr, scale = 1) {
+  const d = createEmptyDeltas();
+  if (!effectsStr || !scale) return d;
+  const text = String(effectsStr);
+
+  const patterns = [
+    { key: "resourcesTurn", regex: /([+-]\d[\d,]*)\s*R\/Turn/i },
+    { key: "psCurrent", regex: /([+-]\d[\d,]*)\s*PS\b/i },
+    { key: "unrest", regex: /([+-]\d[\d,]*)\s*Unrest/i },
+    { key: "corruption", regex: /([+-]\d[\d,]*)\s*Corruption/i },
+    { key: "basing", regex: /([+-]\d[\d,]*)\s*(?:Basing|Bas)\b/i },
+    { key: "citizens", regex: /([+-]\d[\d,]*)\s*(?:Citizens|Cit)\b/i },
+    { key: "menials", regex: /([+-]\d[\d,]*)\s*Menials\b/i },
+    { key: "logistics", regex: /([+-]\d[\d,]*)\s*(?:Logistics|Log)\b/i },
+    { key: "food", regex: /([+-]\d[\d,]*)\s*Food\b/i },
+    { key: "health", regex: /([+-]\d[\d,]*)\s*Health\b/i },
+    { key: "consumerGoods", regex: /([+-]\d[\d,]*)\s*(?:Consumer Goods|Consumer)\b/i },
+    { key: "capitalGoods", regex: /([+-]\d[\d,]*)\s*(?:Capital Goods|Cap Goods|Cap)\b/i },
+    { key: "strategicGoods", regex: /([+-]\d[\d,]*)\s*(?:Strategic Goods|Strat Goods|Strat)\b/i },
+    { key: "shipyardParts", regex: /([+-]\d[\d,]*)\s*Shipyard Parts?\b/i },
+    { key: "beskar", regex: /([+-]\d[\d,]*)\s*Beskar\b/i }
+  ];
+
+  for (const p of patterns) {
+    const m = text.match(p.regex);
+    if (m) {
+      const val = parseInt(m[1].replace(/,/g, ""), 10);
+      if (!isNaN(val)) {
+        d[p.key] += val * scale;
+      }
+    }
+  }
+
+  return d;
+}
+
+function getImperialCorruptionFlatOrAvg(opt, rollValue) {
+  const info = getImperialCorruptionInfo(opt);
+  if (!info) return 0;
+  if (info.faces === null) return 1;
+  return Math.max(1, Math.min(info.faces, Math.round((Number(rollValue) || 50) * info.faces / 100)));
+}
+
+function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
+  const effectiveRoll = Number(rollValue);
+  const rollNum = isNaN(effectiveRoll) ? 50 : effectiveRoll;
+
+  const totals = createEmptyDeltas();
   let assignedDice = 0;
+  let psSpent = 0;
+  const actionSummaries = [];
 
   state.instances.forEach(inst => {
     const p = getProjectDef(inst.projectId);
     if (!p || p.isDirectOrder) return;
-    const opt = p.options[inst.optionIndex || 0] || { cost: 0, maxDice: 99 };
-    const count = inst.assignments.length;
-    assignedDice += count;
-    if (count > 0) {
-      totalSpent += (opt.cost || 0) * count;
-      if (opt.psCost) psSpent += opt.psCost * count;
+    const list = inst.assignments || [];
+    if (list.length === 0) return;
+
+    assignedDice += list.length;
+    const opt = p.options[inst.optionIndex || 0] || { label: "Standard", cost: 0, effects: "" };
+    const costSpent = (opt.cost || 0) * list.length;
+    totals.resourcesSpent += costSpent;
+    if (opt.psCost) psSpent += opt.psCost * list.length;
+
+    const bonuses = list.map(a => {
+      const char = CHARACTERS.find(c => c.id === a.charId);
+      return calculateDieBonus(char, p, inst.optionIndex);
+    });
+    const bonusSum = bonuses.reduce((a, b) => a + b, 0);
+    const rollTotal = list.length * rollNum + bonusSum;
+
+    const actionDelta = createEmptyDeltas();
+    actionDelta.resourcesSpent += costSpent;
+    if (opt.psCost) actionDelta.psCurrent -= opt.psCost * list.length;
+
+    let outcomeLabel = "";
+    let succeeded = false;
+
+    if (isImperialOption(opt)) {
+      succeeded = true;
+      const corrInc = getImperialCorruptionFlatOrAvg(opt, rollNum);
+      actionDelta.corruption += corrInc;
+      const effectDelta = parseEffectsStringToDeltas(opt.effects, 1);
+      addDeltasInto(actionDelta, effectDelta);
+      outcomeLabel = `Auto-Success (Imperial) • +${corrInc} Corruption`;
+    } else {
+      const spec = parseProjectTargetSpec(p, opt);
+      if (!spec.baseTarget) {
+        succeeded = true;
+        const effectDelta = parseEffectsStringToDeltas(opt.effects, 1);
+        addDeltasInto(actionDelta, effectDelta);
+        outcomeLabel = `Roll Total: ${rollTotal} (${list.length}×${rollNum}${bonusSum >= 0 ? `+${bonusSum}` : bonusSum}) • Applied`;
+      } else if (spec.isPhased) {
+        const phases = buildRecursivePhaseTargets(spec.baseTarget, 5, spec.explicitThresholds);
+        let reachedPhase = 0;
+        for (const ph of phases) {
+          if (rollTotal >= ph.target) reachedPhase = ph.phase;
+        }
+        if (reachedPhase > 0) {
+          succeeded = true;
+          const effectDelta = parseEffectsStringToDeltas(opt.effects, reachedPhase);
+          addDeltasInto(actionDelta, effectDelta);
+          const nextTarget = phases[reachedPhase] ? phases[reachedPhase].target : phases[phases.length - 1].target + spec.baseTarget;
+          outcomeLabel = `Roll Total: ${rollTotal} vs Target ${spec.baseTarget} → Reached Phase ${reachedPhase} (Next: ${nextTarget})`;
+        } else {
+          outcomeLabel = `Roll Total: ${rollTotal} vs Target ${spec.baseTarget} → Below Phase 1 (${rollTotal}/${spec.baseTarget})`;
+        }
+      } else {
+        const targetVal = spec.baseTarget;
+        if (rollTotal >= targetVal) {
+          succeeded = true;
+          const effectDelta = parseEffectsStringToDeltas(opt.effects, 1);
+          addDeltasInto(actionDelta, effectDelta);
+          outcomeLabel = `Roll Total: ${rollTotal} ≥ Target ${targetVal} → Success`;
+        } else {
+          outcomeLabel = `Roll Total: ${rollTotal} < Target ${targetVal} → Failed`;
+        }
+      }
     }
+
+    addDeltasInto(totals, actionDelta);
+    actionSummaries.push({
+      instanceId: inst.instanceId,
+      title: p.title,
+      optionLabel: opt.label,
+      diceCount: list.length,
+      bonuses,
+      rollTotal,
+      succeeded,
+      outcomeLabel,
+      costSpent,
+      delta: actionDelta
+    });
   });
+
+  if (state.tieQueueQty > 0) {
+    const queueDef = PROJECTS.find(p => p.isDirectOrder) || { unitName: "10 TIE Fighter Squadrons", unitCost: 36 };
+    const unitCost = queueDef.unitCost || 36;
+    const tieCost = state.tieQueueQty * unitCost;
+    totals.resourcesSpent += tieCost;
+    actionSummaries.push({
+      instanceId: "tie_queue",
+      title: queueDef.title,
+      optionLabel: `${state.tieQueueQty}× ${queueDef.unitName}`,
+      diceCount: 0,
+      bonuses: [],
+      rollTotal: null,
+      succeeded: true,
+      outcomeLabel: `Direct Order (${state.tieQueueQty}× ${unitCost} R)`,
+      costSpent: tieCost,
+      delta: { ...createEmptyDeltas(), resourcesSpent: tieCost }
+    });
+  }
 
   if (state.deployment.commanderId) {
     const cmdr = CHARACTERS.find(c => c.id === state.deployment.commanderId);
     if (cmdr) assignedDice += cmdr.dice.length;
   }
 
+  return {
+    rollValue: rollNum,
+    totals,
+    assignedDice,
+    psSpent,
+    actionSummaries
+  };
+}
+
+function formatSignedNum(n) {
+  const num = Number(n) || 0;
+  if (num > 0) return `+${num.toLocaleString()}`;
+  if (num < 0) return num.toLocaleString();
+  return "0";
+}
+
+function renderDeltaBadge(deltaVal, invertGood = false) {
+  const val = Number(deltaVal) || 0;
+  if (val === 0) return "";
+  const isPositiveEffect = invertGood ? val < 0 : val > 0;
+  const cls = isPositiveEffect ? "stat-delta-pos" : "stat-delta-neg";
+  return `<span class="${cls}">(${formatSignedNum(val)})</span>`;
+}
+
+function updateTopStats() {
+  const outcome = evaluateTurnOutcomesAtRoll(state.assumedRoll);
+  const t = outcome.totals;
+
   const totalDice = CHARACTERS.reduce((acc, c) => acc + c.dice.length, 0);
-  const remaining = 20325 - totalSpent;
   const deployR = getDeployCapUsed();
 
-  document.getElementById("res-remaining").textContent = remaining.toLocaleString();
-  document.getElementById("res-spent").textContent = totalSpent.toLocaleString();
-  document.getElementById("ps-remaining").textContent = 95 - psSpent;
-  document.getElementById("dice-assigned-count").textContent = assignedDice;
-  document.getElementById("dice-total-count").textContent = totalDice;
-  document.getElementById("deploy-cap-used").textContent = deployR;
+  const remainingReserve = BASE_STATS.resourcesReserve - t.resourcesSpent;
+  const projectedTurnR = BASE_STATS.resourcesTurn + t.resourcesTurn;
+  const projectedPs = BASE_STATS.psCurrent + t.psCurrent;
+  const projectedUnrest = BASE_STATS.unrest + t.unrest;
+  const projectedCorruption = BASE_STATS.corruption + t.corruption;
+  const projectedBasing = BASE_STATS.basing + t.basing;
+  const projectedCitizens = BASE_STATS.citizens + t.citizens;
+  const projectedMenials = BASE_STATS.menials + t.menials;
+  const projectedLogistics = BASE_STATS.logistics + t.logistics;
+  const projectedFood = BASE_STATS.food + t.food;
+  const projectedFoodStock = BASE_STATS.foodStockpile + t.foodStockpile;
+  const projectedHealth = BASE_STATS.health + t.health;
+  const projectedHealthStock = BASE_STATS.healthStockpile + t.healthStockpile;
+  const projectedConsumer = BASE_STATS.consumerGoods + t.consumerGoods;
+  const projectedCapital = BASE_STATS.capitalGoods + t.capitalGoods;
+  const projectedStrategic = BASE_STATS.strategicGoods + t.strategicGoods;
+  const projectedShipParts = BASE_STATS.shipyardParts + t.shipyardParts;
+  const projectedBeskar = BASE_STATS.beskar + t.beskar;
+
+  const bar = document.getElementById("top-stats-bar");
+  bar.innerHTML = `
+    <div class="stat-pill">
+      R: <strong>${projectedTurnR} + ${remainingReserve.toLocaleString()}</strong>
+      ${renderDeltaBadge(-t.resourcesSpent + t.resourcesTurn)}
+      <span class="stat-sub">(Spent: ${t.resourcesSpent.toLocaleString()})</span>
+    </div>
+    <div class="stat-pill">
+      PS: <strong>${projectedPs}/${BASE_STATS.psMax}</strong>
+      ${renderDeltaBadge(t.psCurrent)}
+    </div>
+    <div class="stat-pill warn">
+      Unrest: <strong>${projectedUnrest}</strong>
+      ${renderDeltaBadge(t.unrest, true)}
+    </div>
+    <div class="stat-pill">
+      Corruption: <strong>${projectedCorruption}</strong>
+      ${renderDeltaBadge(t.corruption, true)}
+    </div>
+    <div class="stat-pill">
+      Dice: <strong>${outcome.assignedDice}/${totalDice}</strong>
+    </div>
+    <div class="stat-pill info">
+      Deploy: <strong>${deployR}/20R</strong>
+    </div>
+    <div class="stat-pill ${projectedBasing < 0 ? 'neg' : 'pos'}">
+      Basing: <strong>${formatSignedNum(projectedBasing)}</strong>
+      ${renderDeltaBadge(t.basing)}
+    </div>
+    <div class="stat-pill pos">
+      Citizens: <strong>${formatSignedNum(projectedCitizens)}</strong>
+      ${renderDeltaBadge(t.citizens)}
+    </div>
+    <div class="stat-pill pos">
+      Menials: <strong>${formatSignedNum(projectedMenials)}</strong>
+      ${renderDeltaBadge(t.menials)}
+    </div>
+    <div class="stat-pill pos">
+      Logistics: <strong>${formatSignedNum(projectedLogistics)}</strong>
+      ${renderDeltaBadge(t.logistics)}
+    </div>
+    <div class="stat-pill ${projectedFood < 0 ? 'neg' : 'pos'}">
+      Food: <strong>${formatSignedNum(projectedFood)}</strong>
+      ${renderDeltaBadge(t.food)}
+      <span class="stat-sub">(${projectedFoodStock} Stockpiled${renderDeltaBadge(t.foodStockpile)}, ${BASE_STATS.foodRationing})</span>
+    </div>
+    <div class="stat-pill ${projectedHealth < 0 ? 'neg' : 'pos'}">
+      Health: <strong>${formatSignedNum(projectedHealth)}</strong>
+      ${renderDeltaBadge(t.health)}
+      <span class="stat-sub">(${projectedHealthStock} Stockpiled${renderDeltaBadge(t.healthStockpile)}, ${BASE_STATS.healthRationing})</span>
+    </div>
+    <div class="stat-pill ${projectedConsumer < 0 ? 'neg' : 'pos'}">
+      Consumer Goods: <strong>${formatSignedNum(projectedConsumer)}</strong>
+      ${renderDeltaBadge(t.consumerGoods)}
+    </div>
+    <div class="stat-pill pos">
+      Capital Goods: <strong>${formatSignedNum(projectedCapital)}</strong>
+      ${renderDeltaBadge(t.capitalGoods)}
+    </div>
+    <div class="stat-pill pos">
+      Strategic Goods: <strong>${formatSignedNum(projectedStrategic)}</strong>
+      ${renderDeltaBadge(t.strategicGoods)}
+    </div>
+    <div class="stat-pill pos">
+      Shipyard Parts: <strong>${formatSignedNum(projectedShipParts)}</strong>
+      ${renderDeltaBadge(t.shipyardParts)}
+    </div>
+    <div class="stat-pill pos">
+      Beskar: <strong>${formatSignedNum(projectedBeskar)}</strong>
+      ${renderDeltaBadge(t.beskar)}
+    </div>
+  `;
+}
+
+// ==========================================
+// SUCCESS PROBABILITY CALCULATOR ENGINE
+// ==========================================
+function parseProjectTargetSpec(proj, opt) {
+  const label = (opt && opt.label) || "";
+  const combined = `${label} ${(proj && proj.title) || ""} ${(proj && proj.desc) || ""}`;
+
+  const multiDcMatch = combined.match(/\bDC\s*(\d+(?:\s*\/\s*\d+)+)/i);
+  if (multiDcMatch) {
+    const dcs = multiDcMatch[1]
+      .split("/")
+      .map(s => parseInt(s.replace(/,/g, "").trim(), 10))
+      .filter(n => !isNaN(n) && n > 0);
+    if (dcs.length > 0) {
+      return {
+        isPhased: false,
+        baseTarget: dcs[0],
+        targets: dcs,
+        labelType: "DC Tier"
+      };
+    }
+  }
+
+  const singleDcMatch = combined.match(/\bDC\s*(\d[\d,]*)/i);
+  if (singleDcMatch) {
+    const dc = parseInt(singleDcMatch[1].replace(/,/g, ""), 10);
+    if (!isNaN(dc) && dc > 0) {
+      return {
+        isPhased: false,
+        baseTarget: dc,
+        targets: [dc],
+        labelType: "DC"
+      };
+    }
+  }
+
+  const progMatch = label.match(/\(\s*(\d[\d,]*)\s*\/\s*(\d[\d,]*)\s*\)/);
+  if (progMatch) {
+    const current = parseInt(progMatch[1].replace(/,/g, ""), 10) || 0;
+    const total = parseInt(progMatch[2].replace(/,/g, ""), 10);
+    const remaining = Math.max(1, total - current);
+    const isPhased = /\b(phase|stage)\b/i.test(combined);
+
+    const explicitThresholds = [];
+    if (proj && Array.isArray(proj.options)) {
+      for (const o of proj.options) {
+        const m = (o.label || "").match(/\(\s*\d[\d,]*\s*\/\s*(\d[\d,]*)\s*\)/);
+        if (m) {
+          const tVal = parseInt(m[1].replace(/,/g, ""), 10);
+          if (!isNaN(tVal) && tVal > 0 && !explicitThresholds.includes(tVal)) {
+            explicitThresholds.push(tVal);
+          }
+        }
+      }
+    }
+
+    return {
+      isPhased,
+      baseTarget: remaining,
+      explicitThresholds: explicitThresholds.length > 1 ? explicitThresholds : [],
+      labelType: isPhased ? "Phase" : "Target"
+    };
+  }
+
+  return {
+    isPhased: false,
+    baseTarget: null,
+    targets: [],
+    labelType: "None"
+  };
+}
+
+function buildRecursivePhaseTargets(baseTarget, phaseCount, explicitThresholds = []) {
+  const count = Math.max(1, parseInt(phaseCount, 10) || 1);
+  const startVal = Math.max(1, parseInt(baseTarget, 10) || 100);
+  const explicit = Array.isArray(explicitThresholds)
+    ? explicitThresholds.map(n => parseInt(n, 10)).filter(n => !isNaN(n) && n > 0)
+    : [];
+
+  function stepAt(phaseIndex, prevCumulative, prevStepCost) {
+    if (phaseIndex >= count) return [];
+
+    let nextCumulative;
+    let nextStepCost;
+
+    if (phaseIndex < explicit.length) {
+      nextCumulative = explicit[phaseIndex];
+      nextStepCost = phaseIndex === 0 ? nextCumulative : Math.max(1, nextCumulative - prevCumulative);
+    } else if (phaseIndex === 0) {
+      nextCumulative = startVal;
+      nextStepCost = startVal;
+    } else {
+      nextStepCost = prevStepCost;
+      nextCumulative = prevCumulative + nextStepCost;
+    }
+
+    return [
+      {
+        phase: phaseIndex + 1,
+        target: nextCumulative,
+        stepCost: nextStepCost,
+        explicit: phaseIndex < explicit.length
+      },
+      ...stepAt(phaseIndex + 1, nextCumulative, nextStepCost)
+    ];
+  }
+
+  return stepAt(0, 0, startVal);
+}
+
+function computeDiceTotalDistribution(bonuses) {
+  const list = Array.isArray(bonuses) && bonuses.length > 0 ? bonuses : [];
+  if (list.length === 0) {
+    return {
+      minTotal: 0,
+      maxTotal: 0,
+      probsByTotal: new Map([[0, 1]])
+    };
+  }
+
+  let dist = new Map([[0, 1]]);
+  for (const bonus of list) {
+    const b = Number(bonus) || 0;
+    const nextDist = new Map();
+    const pSingle = 1 / 100;
+
+    for (const [prevSum, prevProb] of dist.entries()) {
+      const contribution = prevProb * pSingle;
+      const startTotal = prevSum + 1 + b;
+      const endTotal = prevSum + 100 + b;
+      for (let t = startTotal; t <= endTotal; t++) {
+        nextDist.set(t, (nextDist.get(t) || 0) + contribution);
+      }
+    }
+    dist = nextDist;
+  }
+
+  let minTotal = Infinity;
+  let maxTotal = -Infinity;
+  for (const t of dist.keys()) {
+    if (t < minTotal) minTotal = t;
+    if (t > maxTotal) maxTotal = t;
+  }
+
+  return { minTotal, maxTotal, probsByTotal: dist };
+}
+
+function probabilityAtLeast(distInfo, threshold) {
+  let prob = 0;
+  for (const [total, p] of distInfo.probsByTotal.entries()) {
+    if (total >= threshold) {
+      prob += p;
+    }
+  }
+  return Math.max(0, Math.min(1, prob));
+}
+
+function evaluateInstanceSuccessSummary(inst) {
+  const proj = getProjectDef(inst.projectId);
+  if (!proj || proj.isDirectOrder) return null;
+  const list = inst.assignments || [];
+  if (list.length === 0) return null;
+
+  const opt = proj.options[inst.optionIndex || 0] || { label: "Standard" };
+  if (isImperialOption(opt)) {
+    return { autoSuccess: true, badgeText: "Auto 100%", primaryProb: 1 };
+  }
+
+  const spec = parseProjectTargetSpec(proj, opt);
+  if (!spec.baseTarget) return null;
+
+  const bonuses = list.map(a => {
+    const char = CHARACTERS.find(c => c.id === a.charId);
+    return calculateDieBonus(char, proj, inst.optionIndex);
+  });
+
+  const distInfo = computeDiceTotalDistribution(bonuses);
+  const p1 = probabilityAtLeast(distInfo, spec.baseTarget);
+  const pct = (p1 * 100).toFixed(1);
+
+  if (spec.isPhased) {
+    const phases = buildRecursivePhaseTargets(spec.baseTarget, 3, spec.explicitThresholds);
+    const p2 = phases[1] ? probabilityAtLeast(distInfo, phases[1].target) : 0;
+    return {
+      autoSuccess: false,
+      badgeText: `P1: ${pct}%${p2 > 0 ? ` • P2: ${(p2 * 100).toFixed(1)}%` : ""}`,
+      primaryProb: p1
+    };
+  }
+
+  return {
+    autoSuccess: false,
+    badgeText: `Success: ${pct}%`,
+    primaryProb: p1
+  };
+}
+
+function parseNumberList(raw) {
+  return String(raw || "")
+    .split(/[\s,]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+    .map(s => Number(s))
+    .filter(n => !isNaN(n));
+}
+
+function openProbModal(preferredInstanceId = null) {
+  const select = document.getElementById("calc-source-select");
+  const activeInstances = state.instances.filter(
+    inst => !getProjectDef(inst.projectId)?.isDirectOrder && (inst.assignments || []).length > 0
+  );
+
+  select.innerHTML = `<option value="">-- Custom / Manual Calculation --</option>` +
+    activeInstances.map(inst => {
+      const p = getProjectDef(inst.projectId);
+      const opt = p.options[inst.optionIndex || 0] || { label: "Standard" };
+      return `<option value="${inst.instanceId}">${p.title} — ${opt.label} (${inst.assignments.length} dice)</option>`;
+    }).join("");
+
+  const targetInstId = preferredInstanceId || (activeInstances[0] ? activeInstances[0].instanceId : "");
+  if (targetInstId && activeInstances.some(i => i.instanceId === targetInstId)) {
+    select.value = targetInstId;
+    loadCalculatorFromInstance(targetInstId);
+  } else {
+    select.value = "";
+    recomputeProbModal();
+  }
+
+  document.getElementById("prob-modal").classList.add("open");
+}
+
+function closeProbModal() {
+  document.getElementById("prob-modal").classList.remove("open");
+}
+
+function loadCalculatorFromInstance(instanceId) {
+  if (!instanceId) {
+    recomputeProbModal();
+    return;
+  }
+  const inst = getInstance(instanceId);
+  if (!inst) return;
+  const proj = getProjectDef(inst.projectId);
+  if (!proj) return;
+
+  const opt = proj.options[inst.optionIndex || 0] || { label: "Standard" };
+  const spec = parseProjectTargetSpec(proj, opt);
+  const bonuses = (inst.assignments || []).map(a => {
+    const char = CHARACTERS.find(c => c.id === a.charId);
+    return calculateDieBonus(char, proj, inst.optionIndex);
+  });
+
+  document.getElementById("calc-dice-count").value = Math.max(1, bonuses.length);
+  document.getElementById("calc-bonuses").value = bonuses.length > 0
+    ? bonuses.map(b => (b >= 0 ? `+${b}` : `${b}`)).join(", ")
+    : "+0";
+  document.getElementById("calc-base-target").value = spec.baseTarget || 100;
+  document.getElementById("calc-phased-mode").value = spec.isPhased ? "true" : "false";
+
+  if (spec.targets && spec.targets.length > 1) {
+    document.getElementById("calc-phase-count").value = spec.targets.length;
+    document.getElementById("calc-explicit-phases").value = spec.targets.join(", ");
+  } else if (spec.explicitThresholds && spec.explicitThresholds.length > 1) {
+    document.getElementById("calc-phase-count").value = spec.explicitThresholds.length;
+    document.getElementById("calc-explicit-phases").value = spec.explicitThresholds.join(", ");
+  } else {
+    document.getElementById("calc-phase-count").value = spec.isPhased ? 3 : 1;
+    document.getElementById("calc-explicit-phases").value = "";
+  }
+
+  recomputeProbModal();
+}
+
+function recomputeProbModal() {
+  const diceCount = Math.max(0, Math.min(20, parseInt(document.getElementById("calc-dice-count").value, 10) || 0));
+  const baseTarget = Math.max(1, parseInt(document.getElementById("calc-base-target").value, 10) || 1);
+  const phaseCount = document.getElementById("calc-phased-mode").value === "true"
+    ? Math.max(1, Math.min(10, parseInt(document.getElementById("calc-phase-count").value, 10) || 1))
+    : 1;
+  const explicitRaw = parseNumberList(document.getElementById("calc-explicit-phases").value);
+  const bonusRaw = parseNumberList(document.getElementById("calc-bonuses").value);
+
+  const effectiveBonuses = [];
+  for (let i = 0; i < diceCount; i++) {
+    effectiveBonuses.push(i < bonusRaw.length ? bonusRaw[i] : 0);
+  }
+
+  const distInfo = computeDiceTotalDistribution(effectiveBonuses);
+  const phaseList = buildRecursivePhaseTargets(baseTarget, phaseCount, explicitRaw);
+
+  const bonusSum = effectiveBonuses.reduce((a, b) => a + b, 0);
+  const expectedTotal = diceCount * 50.5 + bonusSum;
+
+  document.getElementById("calc-summary").innerHTML =
+    `<strong>Dice:</strong> ${diceCount}d100 &nbsp;|&nbsp; ` +
+    `<strong>Bonuses:</strong> [${effectiveBonuses.map(b => (b >= 0 ? `+${b}` : `${b}`)).join(", ") || "None"}] (Sum: ${bonusSum >= 0 ? `+${bonusSum}` : bonusSum}) &nbsp;|&nbsp; ` +
+    `<strong>Roll Range:</strong> ${distInfo.minTotal}–${distInfo.maxTotal} (Avg: ${expectedTotal.toFixed(1)})`;
+
+  const resultsEl = document.getElementById("calc-results");
+  resultsEl.innerHTML = phaseList.map(p => {
+    const prob = probabilityAtLeast(distInfo, p.target);
+    const pct = (prob * 100).toFixed(2);
+    const ruleNote = p.explicit
+      ? "Explicit phase target"
+      : (p.phase === 1 ? "Base target" : `Recursive step (+${p.stepCost} from prior phase)`);
+
+    return `
+      <div class="phase-outcome-card">
+        <div class="phase-outcome-top">
+          <div>
+            <strong style="color:#fff;">${phaseCount > 1 ? `Phase ${p.phase}` : "Target"}: ${p.target}</strong>
+            <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">(${ruleNote})</span>
+          </div>
+          <strong style="color:${prob >= 0.5 ? 'var(--accent-green)' : (prob > 0 ? 'var(--accent-gold)' : 'var(--accent-red)')};font-size:0.92rem;">
+            ${pct}%
+          </strong>
+        </div>
+        <div class="prob-bar-bg">
+          <div class="prob-bar-fill" style="width:${(prob * 100).toFixed(2)}%;"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 // ==========================================
@@ -2037,14 +2965,15 @@ function renderRoster() {
 function renderTabs() {
   const tabs = [
     "All", "Assigned Only", "Infrastructure", "Industry", "Intelligence",
-    "Services", "Administration", "Military", "Imperial Army", "Imperial Navy", "Deployment"
+    "Services", "Administration", "Military", "Imperial Army", "Imperial Navy",
+    "Deployment", "Final Summary"
   ];
   const container = document.getElementById("category-tabs");
-  container.innerHTML = tabs.map(tab => `
-    <button class="tab-btn ${tab === 'Deployment' ? 'deploy-tab' : ''} ${state.activeTab === tab ? 'active' : ''}" onclick="setTab('${tab}')">
-      ${tab === 'Deployment' ? '🚀 Deployment' : tab}
-    </button>
-  `).join("");
+  container.innerHTML = tabs.map(tab => {
+    const extraCls = tab === "Deployment" ? "deploy-tab" : (tab === "Final Summary" ? "summary-tab" : "");
+    const label = tab === "Deployment" ? "🚀 Deployment" : (tab === "Final Summary" ? "📊 Final Summary" : tab);
+    return `<button class="tab-btn ${extraCls} ${state.activeTab === tab ? 'active' : ''}" onclick="setTab('${tab}')">${label}</button>`;
+  }).join("");
 }
 
 function setTab(tab) {
@@ -2054,11 +2983,245 @@ function setTab(tab) {
     document.getElementById("projects-grid").style.display = "none";
     document.getElementById("deploy-container").style.display = "flex";
     renderDeployment();
+  } else if (tab === "Final Summary") {
+    document.getElementById("projects-grid").style.display = "none";
+    document.getElementById("deploy-container").style.display = "flex";
+    renderFinalSummary();
   } else {
     document.getElementById("deploy-container").style.display = "none";
     document.getElementById("projects-grid").style.display = "grid";
     renderProjects();
   }
+}
+
+function setAssumedRoll(val) {
+  const parsed = parseInt(val, 10);
+  state.assumedRoll = isNaN(parsed) ? 50 : Math.max(1, Math.min(100, parsed));
+  updateTopStats();
+  if (state.activeTab === "Final Summary") {
+    renderFinalSummary();
+  }
+}
+
+function formatActionDeltaChips(delta) {
+  if (!delta) return "";
+  const items = [];
+  const labelMap = [
+    ["resourcesSpent", "Spent", true],
+    ["resourcesTurn", "R/Turn", false],
+    ["psCurrent", "PS", false],
+    ["unrest", "Unrest", true],
+    ["corruption", "Corruption", true],
+    ["basing", "Basing", false],
+    ["citizens", "Citizens", false],
+    ["menials", "Menials", false],
+    ["logistics", "Logistics", false],
+    ["food", "Food", false],
+    ["foodStockpile", "Food Stock", false],
+    ["health", "Health", false],
+    ["healthStockpile", "Health Stock", false],
+    ["consumerGoods", "Consumer", false],
+    ["capitalGoods", "Capital", false],
+    ["strategicGoods", "Strategic", false],
+    ["shipyardParts", "Ship Parts", false],
+    ["beskar", "Beskar", false]
+  ];
+
+  for (const [key, label, inv] of labelMap) {
+    const v = Number(delta[key]) || 0;
+    if (v === 0) continue;
+    if (key === "resourcesSpent") {
+      items.push(`<span class="meta-tag cost">-${v.toLocaleString()} R</span>`);
+      continue;
+    }
+    const isGood = inv ? v < 0 : v > 0;
+    items.push(`<span class="meta-tag ${isGood ? 'effect-pos' : 'warn'}">${formatSignedNum(v)} ${label}</span>`);
+  }
+  return items.join("");
+}
+
+function renderFinalSummary() {
+  const container = document.getElementById("deploy-container");
+  const outcome = evaluateTurnOutcomesAtRoll(state.assumedRoll);
+  const t = outcome.totals;
+
+  const statRows = [
+    {
+      name: "Resources (Reserve)",
+      orig: BASE_STATS.resourcesReserve.toLocaleString() + " R",
+      next: (BASE_STATS.resourcesReserve - t.resourcesSpent).toLocaleString() + " R",
+      delta: -t.resourcesSpent,
+      invert: false
+    },
+    {
+      name: "Resources (Per Turn)",
+      orig: `${BASE_STATS.resourcesTurn} R`,
+      next: `${BASE_STATS.resourcesTurn + t.resourcesTurn} R`,
+      delta: t.resourcesTurn,
+      invert: false
+    },
+    {
+      name: "Political Support (PS)",
+      orig: `${BASE_STATS.psCurrent}/${BASE_STATS.psMax}`,
+      next: `${BASE_STATS.psCurrent + t.psCurrent}/${BASE_STATS.psMax}`,
+      delta: t.psCurrent,
+      invert: false
+    },
+    {
+      name: "Unrest",
+      orig: `${BASE_STATS.unrest}`,
+      next: `${BASE_STATS.unrest + t.unrest}`,
+      delta: t.unrest,
+      invert: true
+    },
+    {
+      name: "Corruption",
+      orig: `${BASE_STATS.corruption}`,
+      next: `${BASE_STATS.corruption + t.corruption}`,
+      delta: t.corruption,
+      invert: true
+    },
+    {
+      name: "Basing",
+      orig: formatSignedNum(BASE_STATS.basing),
+      next: formatSignedNum(BASE_STATS.basing + t.basing),
+      delta: t.basing,
+      invert: false
+    },
+    {
+      name: "Citizens",
+      orig: formatSignedNum(BASE_STATS.citizens),
+      next: formatSignedNum(BASE_STATS.citizens + t.citizens),
+      delta: t.citizens,
+      invert: false
+    },
+    {
+      name: "Menials",
+      orig: formatSignedNum(BASE_STATS.menials),
+      next: formatSignedNum(BASE_STATS.menials + t.menials),
+      delta: t.menials,
+      invert: false
+    },
+    {
+      name: "Logistics",
+      orig: formatSignedNum(BASE_STATS.logistics),
+      next: formatSignedNum(BASE_STATS.logistics + t.logistics),
+      delta: t.logistics,
+      invert: false
+    },
+    {
+      name: `Food (${BASE_STATS.foodRationing})`,
+      orig: `${formatSignedNum(BASE_STATS.food)} (${BASE_STATS.foodStockpile} Stock)`,
+      next: `${formatSignedNum(BASE_STATS.food + t.food)} (${BASE_STATS.foodStockpile + t.foodStockpile} Stock)`,
+      delta: t.food,
+      invert: false
+    },
+    {
+      name: `Health (${BASE_STATS.healthRationing})`,
+      orig: `${formatSignedNum(BASE_STATS.health)} (${BASE_STATS.healthStockpile} Stock)`,
+      next: `${formatSignedNum(BASE_STATS.health + t.health)} (${BASE_STATS.healthStockpile + t.healthStockpile} Stock)`,
+      delta: t.health,
+      invert: false
+    },
+    {
+      name: "Consumer Goods",
+      orig: formatSignedNum(BASE_STATS.consumerGoods),
+      next: formatSignedNum(BASE_STATS.consumerGoods + t.consumerGoods),
+      delta: t.consumerGoods,
+      invert: false
+    },
+    {
+      name: "Capital Goods",
+      orig: formatSignedNum(BASE_STATS.capitalGoods),
+      next: formatSignedNum(BASE_STATS.capitalGoods + t.capitalGoods),
+      delta: t.capitalGoods,
+      invert: false
+    },
+    {
+      name: "Strategic Goods",
+      orig: formatSignedNum(BASE_STATS.strategicGoods),
+      next: formatSignedNum(BASE_STATS.strategicGoods + t.strategicGoods),
+      delta: t.strategicGoods,
+      invert: false
+    },
+    {
+      name: "Shipyard Parts",
+      orig: formatSignedNum(BASE_STATS.shipyardParts),
+      next: formatSignedNum(BASE_STATS.shipyardParts + t.shipyardParts),
+      delta: t.shipyardParts,
+      invert: false
+    },
+    {
+      name: "Beskar",
+      orig: formatSignedNum(BASE_STATS.beskar),
+      next: formatSignedNum(BASE_STATS.beskar + t.beskar),
+      delta: t.beskar,
+      invert: false
+    }
+  ];
+
+  const statsCardsHTML = statRows.map(r => {
+    const hasDelta = (Number(r.delta) || 0) !== 0;
+    return `
+      <div class="summary-stat-card ${hasDelta ? 'changed' : ''}">
+        <div class="summary-stat-name">${r.name}</div>
+        <div class="summary-stat-values">
+          <span>${r.orig} → <strong style="color:#fff;">${r.next}</strong></span>
+          ${renderDeltaBadge(r.delta, r.invert)}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const actionsHTML = outcome.actionSummaries.length === 0
+    ? `<div class="project-card"><div class="proj-desc">No actions or direct orders assigned yet. Assign dice to projects or add Construction Queue orders to see roll-based outcomes.</div></div>`
+    : outcome.actionSummaries.map(a => `
+        <div class="summary-action-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div>
+              <strong style="color:#fff;font-size:0.9rem;">${a.title}</strong>
+              <span style="font-size:0.78rem;color:var(--text-muted);margin-left:6px;">— ${a.optionLabel}</span>
+            </div>
+            <span class="prob-chip" style="cursor:default;background:${a.succeeded ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.18)'};border-color:${a.succeeded ? 'rgba(16,185,129,0.45)' : 'rgba(239,68,68,0.45)'};color:${a.succeeded ? '#6ee7b7' : '#fca5a5'};">
+              ${a.outcomeLabel}
+            </span>
+          </div>
+          <div class="proj-meta">${formatActionDeltaChips(a.delta) || '<span class="meta-tag">No immediate stat delta</span>'}</div>
+        </div>
+      `).join("");
+
+  container.innerHTML = `
+    <div class="summary-controls-bar">
+      <div>
+        <h3 style="font-size:1rem;color:#fff;margin-bottom:3px;">Final Turn Summary & Roll Simulator</h3>
+        <div style="font-size:0.78rem;color:var(--text-muted);">
+          Evaluates every assigned action using <strong>Roll + Bonuses</strong> against targets/phases (with recursive phase costs). Default roll is <strong>50</strong>.
+        </div>
+      </div>
+      <div class="roll-control-group">
+        <label for="summary-roll-input" style="font-size:0.8rem;font-weight:700;color:#cbd5e1;">Assumed Roll:</label>
+        <input type="range" class="roll-slider" min="1" max="100" value="${state.assumedRoll}"
+               oninput="document.getElementById('summary-roll-input').value = this.value; setAssumedRoll(this.value);">
+        <input type="number" id="summary-roll-input" class="roll-number-input" min="1" max="100" value="${state.assumedRoll}"
+               oninput="setAssumedRoll(this.value);">
+        <button onclick="setAssumedRoll(50)">Reset to 50</button>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="font-size:0.82rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">
+        Projected Empire Stats (At Roll = ${state.assumedRoll})
+      </h4>
+      <div class="summary-stats-grid">${statsCardsHTML}</div>
+    </div>
+
+    <div>
+      <h4 style="font-size:0.82rem;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">
+        Action Roll Breakdown (${outcome.actionSummaries.length} Active)
+      </h4>
+      <div class="summary-action-list">${actionsHTML}</div>
+    </div>
+  `;
 }
 
 function renderProjects() {
@@ -2121,6 +3284,7 @@ function renderProjects() {
     const optIdx = Math.min(inst.optionIndex || 0, opts.length - 1);
     const currentOpt = opts[optIdx];
     const totalProjCost = (currentOpt.cost || 0) * assignedList.length;
+    const probSummary = evaluateInstanceSuccessSummary(inst);
 
     const optionsControlHTML = opts.length > 1
       ? `<div class="option-row">
@@ -2156,7 +3320,8 @@ function renderProjects() {
           ${proj.title}
           ${instanceNum > 1 ? `<span class="clone-badge">Parallel #${instanceNum}</span>` : ''}
         </div>
-        <div style="display:flex;align-items:center;gap:6px;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+          ${probSummary ? `<span class="prob-chip" title="Open in Success Probability Calculator" onclick="openProbModal('${inst.instanceId}')">${probSummary.badgeText}</span>` : ''}
           <span class="proj-cat-badge die-${proj.category}">${proj.subCategory || proj.category}</span>
           ${inst.isClone ? `<button class="danger" style="padding:2px 6px;font-size:0.72rem;" title="Remove parallel task" onclick="removeInstance('${inst.instanceId}')">✕</button>` : ''}
         </div>
@@ -2435,6 +3600,7 @@ function clearDeployment() {
 function resetAll() {
   state.instances = createDefaultInstances();
   state.tieQueueQty = 0;
+  state.assumedRoll = 50;
   clearDeployment();
   refreshAll();
 }
@@ -2444,6 +3610,8 @@ function refreshAll() {
   renderRoster();
   if (state.activeTab === "Deployment") {
     renderDeployment();
+  } else if (state.activeTab === "Final Summary") {
+    renderFinalSummary();
   } else {
     renderProjects();
   }
@@ -2699,6 +3867,7 @@ function getSerializedPlan() {
   return {
     type: "plan",
     version: 1,
+    assumedRoll: state.assumedRoll,
     tieQueueQty: state.tieQueueQty,
     instances: state.instances.map(inst => ({
       instanceId: inst.instanceId,
@@ -2894,6 +4063,10 @@ function applyPlanObject(planObj) {
 
   state.instances = rebuiltInstances;
   state.tieQueueQty = Math.max(0, Math.min(8, parseInt(planObj.tieQueueQty, 10) || 0));
+  if (planObj.assumedRoll !== undefined) {
+    const r = parseInt(planObj.assumedRoll, 10);
+    if (!isNaN(r)) state.assumedRoll = Math.max(1, Math.min(100, r));
+  }
 
   const dep = planObj.deployment && typeof planObj.deployment === "object" ? planObj.deployment : {};
   const validMission = MISSIONS.some(m => m.id === dep.missionId) ? dep.missionId : null;
@@ -2961,7 +4134,9 @@ function applyJsonImport() {
         maxDice: o.maxDice !== undefined ? Number(o.maxDice) : 99,
         effects: o.effects || "",
         ...(o.psCost ? { psCost: Number(o.psCost) } : {}),
-        ...(o.isStarfighter ? { isStarfighter: true } : {})
+        ...(o.isStarfighter ? { isStarfighter: true } : {}),
+        ...(o.isImperial !== undefined ? { isImperial: Boolean(o.isImperial) } : {}),
+        ...(o.corruption ? { corruption: String(o.corruption) } : {})
       })) : undefined,
       tags: Array.isArray(t.tags) ? [...t.tags] : undefined
     }));
@@ -3056,10 +4231,23 @@ function applyJsonImport() {
 }
 
 // ==========================================
-// EXPORT TO FORUM BBCODE
+// EXPORT TO FORUM BBCODE (STANDARD & ROLLS)
 // ==========================================
-function openExportModal() {
-  let lines = ["[X] Plan : Turn Orders"];
+let currentExportMode = "standard";
+
+function formatSignedBonus(bonus) {
+  return bonus >= 0 ? `+${bonus}` : `${bonus}`;
+}
+
+function formatCharWithFactionAndBonus(char, charId, dieType, bonus) {
+  const name = char ? char.name : charId;
+  const faction = char && char.faction ? char.faction : "Unaligned";
+  return `${name} [${faction}] (${dieType} Die, ${formatSignedBonus(bonus)})`;
+}
+
+function buildExportBbCode(mode = "standard") {
+  const includeRolls = mode === "rolls";
+  let lines = [includeRolls ? "[X] Plan : Turn Orders (With Rolls)" : "[X] Plan : Turn Orders"];
   let totalCost = state.tieQueueQty * 36;
   let anyAction = false;
 
@@ -3074,25 +4262,55 @@ function openExportModal() {
     const cat = p.subCategory ? `${p.category} — ${p.subCategory}` : p.category;
     if (!grouped[cat]) grouped[cat] = [];
 
-    const opt = p.options[inst.optionIndex || 0];
-    const projCost = opt.cost * list.length;
+    const opt = p.options[inst.optionIndex || 0] || { label: "Standard", cost: 0 };
+    const projCost = (opt.cost || 0) * list.length;
     totalCost += projCost;
 
-    const diceDesc = list.map(item => {
+    const bonuses = [];
+    const formattedDice = list.map(item => {
       const char = CHARACTERS.find(c => c.id === item.charId);
       const bonus = calculateDieBonus(char, p, inst.optionIndex);
-      const bStr = bonus >= 0 ? `+${bonus}` : `${bonus}`;
-      return `${char ? char.name : item.charId} (${item.dieType} Die, ${bStr})`;
-    }).join(", ");
+      bonuses.push(formatSignedBonus(bonus));
+      return formatCharWithFactionAndBonus(char, item.charId, item.dieType, bonus);
+    });
 
-    grouped[cat].push(`--[X] ${p.title} — ${opt.label} [${projCost} R] | Assigned: ${diceDesc}`);
+    let entry = `--[X] ${p.title} — ${opt.label} [${projCost} R] | Assigned: ${formattedDice.join(", ")}`;
+
+    if (includeRolls) {
+      const imperialCorruption = getImperialCorruptionInfo(opt);
+      if (imperialCorruption) {
+        if (imperialCorruption.faces === null) {
+          entry += `\n---[X] Auto-Succeeds (${imperialCorruption.label})`;
+        } else {
+          const corruptionReason = `${p.title} - ${opt.label} | ${imperialCorruption.tier} Corruption (${imperialCorruption.label})`;
+          const corruptionRollTag = `[DICEROLL]${JSON.stringify({
+            reason: corruptionReason,
+            rolls: list.length,
+            faces: imperialCorruption.faces
+          })}[/DICEROLL]`;
+          entry += `\n---[X] Auto-Succeeds — ${imperialCorruption.label}\n---[X] ${corruptionRollTag}`;
+        }
+      } else {
+        const reason = `${p.title} - ${opt.label} | ${bonuses.join(", ")}`;
+        const rollTag = `[DICEROLL]${JSON.stringify({
+          reason,
+          rolls: list.length,
+          faces: 100
+        })}[/DICEROLL]`;
+        entry += `\n---[X] ${rollTag}`;
+      }
+    }
+
+    grouped[cat].push(entry);
   });
 
   if (state.tieQueueQty > 0) {
     anyAction = true;
+    const queueDef = PROJECTS.find(p => p.isDirectOrder) || { unitName: "10 TIE Fighter Squadrons", unitCost: 36 };
+    const unitCost = queueDef.unitCost || 36;
     const cat = "Military — Imperial Navy";
     if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(`--[X] Construction Queue — ${state.tieQueueQty}x (10 TIE Fighter Squadrons) [${state.tieQueueQty * 36} R]`);
+    grouped[cat].push(`--[X] Construction Queue — ${state.tieQueueQty}x (${queueDef.unitName}) [${state.tieQueueQty * unitCost} R]`);
   }
 
   for (const cat in grouped) {
@@ -3108,7 +4326,7 @@ function openExportModal() {
     const cmdr = CHARACTERS.find(c => c.id === d.commanderId);
     lines.push(`-[X] Fleet Deployment (${getDeployCapUsed()}R / 20R)`);
     lines.push(`--[X] Mission: ${mission ? `${mission.title} (${mission.faction})` : "None Selected"}`);
-    lines.push(`--[X] Commander: ${cmdr ? cmdr.rankTitle : "None"}`);
+    lines.push(`--[X] Commander: ${cmdr ? `${cmdr.rankTitle} [${cmdr.faction || "Unaligned"}]` : "None"}`);
     if (deployedShips.length > 0) {
       const shipList = deployedShips.map(s => `${d.ships[s.id]}x ${s.name} (${d.ships[s.id] * s.costR}R)`).join(", ");
       lines.push(`--[X] Task Force: ${shipList}`);
@@ -3118,16 +4336,28 @@ function openExportModal() {
   if (!anyAction) {
     lines.push("-[] No orders or deployments assigned yet.");
   } else {
-    const displayedRemaining = parseInt(
-      (document.getElementById("res-remaining").textContent || "0").replace(/,/g, ""),
-      10
-    ) || 0;
-    const baseTreasury = displayedRemaining + totalCost;
     lines.push(`-[X] Resources Summary`);
-    lines.push(`--[X] Total Spent: ${totalCost.toLocaleString()} R | Remaining: ${(baseTreasury - totalCost).toLocaleString()} R`);
+    lines.push(`--[X] Total Spent: ${totalCost.toLocaleString()} R | Remaining: ${(BASE_STATS.resourcesReserve - totalCost).toLocaleString()} R`);
   }
 
-  document.getElementById("export-text").value = lines.join("\n");
+  return lines.join("\n");
+}
+
+function setExportMode(mode) {
+  currentExportMode = mode === "rolls" ? "rolls" : "standard";
+  document.getElementById("export-mode-standard").classList.toggle("active", currentExportMode === "standard");
+  document.getElementById("export-mode-rolls").classList.toggle("active", currentExportMode === "rolls");
+  document.getElementById("export-modal-title").textContent = currentExportMode === "rolls"
+    ? "Generated Turn Plan with Rolls (Forum BBCode)"
+    : "Generated Turn Plan (Forum BBCode)";
+  document.getElementById("export-mode-hint").textContent = currentExportMode === "rolls"
+    ? "Groups action dice with bonuses in reason; Imperial options auto-succeed and roll Corruption."
+    : "Includes character factions, bonuses, costs, and deployment.";
+  document.getElementById("export-text").value = buildExportBbCode(currentExportMode);
+}
+
+function openExportModal(mode = currentExportMode) {
+  setExportMode(mode);
   document.getElementById("export-modal").classList.add("open");
 }
 
