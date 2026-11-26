@@ -1269,11 +1269,29 @@ async function tryFetchTurnFile(turnNum) {
     const resp = await fetch(filename, { cache: "no-store" });
     if (!resp.ok) return null;
     const data = await resp.json();
-    if (!data || typeof data !== "object") return null;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
     return { filename, data };
   } catch (_err) {
     return null;
   }
+}
+
+async function findHighestExistingTurn(maxProbe = 100) {
+  let highest = null;
+  for (let t = 1; t <= maxProbe; t++) {
+    const found = await tryFetchTurnFile(t);
+    if (!found) {
+      break;
+    }
+    const parsedTurn = parseInt(found.data.turn, 10);
+    const effectiveTurn = !isNaN(parsedTurn) && parsedTurn > 0 ? parsedTurn : t;
+    highest = {
+      turn: effectiveTurn,
+      filename: found.filename,
+      data: found.data
+    };
+  }
+  return highest;
 }
 
 function applyDatasetFields(dataset) {
@@ -1353,7 +1371,7 @@ function applyTurnDataset(dataset, turnNum, sourceFilename) {
 
   applyDatasetFields(dataset);
 
-  state.currentTurn = turnNum;
+  state.currentTurn = Math.max(1, parseInt(turnNum, 10) || 1);
   state.loadedTurnFile = sourceFilename;
   state.instances = createDefaultInstances(PROJECTS);
   state.tieQueueQty = 0;
@@ -1392,7 +1410,9 @@ async function loadTurnByNumber(turnNum, notifyOnSuccess = true) {
     showToast(`Could not find ${getTurnFileName(targetTurn)}.`, true);
     return false;
   }
-  applyTurnDataset(found.data, targetTurn, found.filename);
+  const parsedTurn = parseInt(found.data.turn, 10);
+  const effectiveTurn = !isNaN(parsedTurn) && parsedTurn > 0 ? parsedTurn : targetTurn;
+  applyTurnDataset(found.data, effectiveTurn, found.filename);
   if (notifyOnSuccess) {
     showToast(`Loaded ${found.filename}.`);
   }
@@ -3557,11 +3577,16 @@ function copyExport() {
   showToast("Copied BBCode to clipboard!");
 }
 
-// Initial Render + Load turn01.json
+// Initial Render + Load Highest Existing Turn File
 renderTabs();
 refreshAll();
 updateTurnControls();
-loadTurnByNumber(1, false);
+(async () => {
+  const highest = await findHighestExistingTurn();
+  if (highest) {
+    applyTurnDataset(highest.data, highest.turn, highest.filename);
+  }
+})();
 </script>
 </body>
 </html>
