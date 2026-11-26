@@ -549,7 +549,7 @@
   }
   .remove-die-btn:hover { color: var(--accent-red); background: transparent; }
 
-  /* Special Direct Order Counter (Construction Queue) */
+  /* Special Direct Order Counters (Construction & Repair Queues) */
   .order-controls {
     display: flex;
     align-items: center;
@@ -558,18 +558,36 @@
     padding: 8px 10px;
     border-radius: 6px;
     border: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .repair-queue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .repair-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(0,0,0,0.25);
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
   }
 
   .qty-box {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
 
   .qty-btn {
-    padding: 2px 9px;
+    padding: 2px 8px;
     font-weight: 800;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
   /* Deployment & Summary View Styling */
@@ -1095,7 +1113,7 @@
 
     <div class="json-scope-bar">
       <span style="font-size:0.76rem;color:var(--text-muted);">
-        Exports/imports turn plan order only (assignments, parallel tasks, TIE queue, and fleet deployment).
+        Exports/imports turn plan order only (assignments, parallel tasks, queues, and fleet deployment).
       </span>
       <div style="display:flex;gap:6px;">
         <button onclick="exportPlanJson(true)">Export Plan JSON</button>
@@ -1164,7 +1182,13 @@ let BASE_STATS = {
   capitalGoods: 0,
   strategicGoods: 0,
   shipyardParts: 0,
-  beskar: 0
+  beskar: 0,
+  availableYards: {
+    supercapital: { active: 0, total: 0 },
+    capital: { active: 0, total: 0 },
+    cruiser: { active: 0, total: 0 },
+    escort: { active: 0, total: 0 }
+  }
 };
 
 let CHARACTERS = [];
@@ -1220,6 +1244,7 @@ let state = {
   assumedRoll: 50,
   instances: [],
   tieQueueQty: 0,
+  repairQueueQty: {},
   deployment: {
     missionId: null,
     commanderId: null,
@@ -1255,7 +1280,36 @@ function applyDatasetFields(dataset) {
   if (!dataset || typeof dataset !== "object") return;
 
   if (dataset.baseStats && typeof dataset.baseStats === "object") {
-    BASE_STATS = { ...BASE_STATS, ...dataset.baseStats };
+    BASE_STATS = {
+      ...BASE_STATS,
+      ...dataset.baseStats,
+      availableYards: {
+        supercapital: {
+          active: 0,
+          total: 0,
+          ...(BASE_STATS.availableYards && BASE_STATS.availableYards.supercapital),
+          ...(dataset.baseStats.availableYards && dataset.baseStats.availableYards.supercapital)
+        },
+        capital: {
+          active: 0,
+          total: 0,
+          ...(BASE_STATS.availableYards && BASE_STATS.availableYards.capital),
+          ...(dataset.baseStats.availableYards && dataset.baseStats.availableYards.capital)
+        },
+        cruiser: {
+          active: 0,
+          total: 0,
+          ...(BASE_STATS.availableYards && BASE_STATS.availableYards.cruiser),
+          ...(dataset.baseStats.availableYards && dataset.baseStats.availableYards.cruiser)
+        },
+        escort: {
+          active: 0,
+          total: 0,
+          ...(BASE_STATS.availableYards && BASE_STATS.availableYards.escort),
+          ...(dataset.baseStats.availableYards && dataset.baseStats.availableYards.escort)
+        }
+      }
+    };
   }
 
   if (Array.isArray(dataset.characters)) {
@@ -1266,8 +1320,18 @@ function applyDatasetFields(dataset) {
     PROJECTS = dataset.projects.filter(Boolean).map(p => ({
       ...p,
       options: Array.isArray(p.options) ? p.options.map(o => ({ ...o })) : undefined,
+      repairItems: Array.isArray(p.repairItems) ? p.repairItems.map(r => ({ ...r })) : undefined,
       tags: Array.isArray(p.tags) ? [...p.tags] : undefined
     }));
+
+    const repairProj = PROJECTS.find(p => p.orderType === "repairQueue" || p.id === "repair_queue");
+    const nextRepairQty = {};
+    if (repairProj && Array.isArray(repairProj.repairItems)) {
+      repairProj.repairItems.forEach(item => {
+        nextRepairQty[item.id] = state.repairQueueQty[item.id] || 0;
+      });
+    }
+    state.repairQueueQty = nextRepairQty;
   }
 
   if (Array.isArray(dataset.missions)) {
@@ -1293,6 +1357,7 @@ function applyTurnDataset(dataset, turnNum, sourceFilename) {
   state.loadedTurnFile = sourceFilename;
   state.instances = createDefaultInstances(PROJECTS);
   state.tieQueueQty = 0;
+  Object.keys(state.repairQueueQty).forEach(k => { state.repairQueueQty[k] = 0; });
   state.deployment.missionId = null;
   state.deployment.commanderId = null;
 
@@ -1361,8 +1426,17 @@ function getInstance(instanceId) {
   return state.instances.find(i => i.instanceId === instanceId);
 }
 
+function isCharLockedByDeployment(char) {
+  if (!char) return false;
+  if (state.deployment.commanderId === char.id) return true;
+  if (char.lockedByDeployment === true) return true;
+  return false;
+}
+
 function isCharDeployed(charId) {
-  return state.deployment.commanderId === charId;
+  if (state.deployment.commanderId === charId) return true;
+  const char = CHARACTERS.find(c => c.id === charId);
+  return Boolean(char && char.lockedByDeployment === true);
 }
 
 function isDieAssigned(charId, dieIndex) {
@@ -1373,6 +1447,42 @@ function isDieAssigned(charId, dieIndex) {
     }
   }
   return false;
+}
+
+function getLockedDiceCount() {
+  let locked = 0;
+  CHARACTERS.forEach(c => {
+    if (isCharDeployed(c.id)) {
+      locked += (c.dice && c.dice.length) || 0;
+    }
+  });
+  return locked;
+}
+
+function getYardCapacity(yardType) {
+  const yards = BASE_STATS.availableYards || {};
+  const entry = yards[yardType];
+  if (!entry) return 0;
+  return Math.max(0, parseInt(entry.active, 10) || 0);
+}
+
+function getRepairQueueProject() {
+  return PROJECTS.find(p => p.orderType === "repairQueue" || p.id === "repair_queue");
+}
+
+function getRepairQueueTotalUnits() {
+  return Object.values(state.repairQueueQty || {}).reduce((acc, n) => acc + (parseInt(n, 10) || 0), 0);
+}
+
+function getRepairQueueCost() {
+  const proj = getRepairQueueProject();
+  if (!proj || !Array.isArray(proj.repairItems)) return 0;
+  let total = 0;
+  proj.repairItems.forEach(item => {
+    const qty = state.repairQueueQty[item.id] || 0;
+    total += qty * (item.unitCost || 0);
+  });
+  return total;
 }
 
 function canAssignDie(dieType, project) {
@@ -1595,7 +1705,7 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
   });
 
   if (state.tieQueueQty > 0) {
-    const queueDef = PROJECTS.find(p => p.isDirectOrder) || { unitName: "10 TIE Fighter Squadrons", unitCost: 36 };
+    const queueDef = PROJECTS.find(p => p.orderType === "tieQueue" || p.id === "construction_queue") || { unitName: "10 TIE Fighter Squadron", unitCost: 36 };
     const unitCost = queueDef.unitCost || 36;
     const tieCost = state.tieQueueQty * unitCost;
     totals.resourcesSpent += tieCost;
@@ -1613,10 +1723,30 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
     });
   }
 
-  if (state.deployment.commanderId) {
-    const cmdr = CHARACTERS.find(c => c.id === state.deployment.commanderId);
-    if (cmdr) assignedDice += (cmdr.dice || []).length;
+  const repairProj = getRepairQueueProject();
+  if (repairProj && Array.isArray(repairProj.repairItems)) {
+    const activeRepairs = repairProj.repairItems
+      .filter(item => (state.repairQueueQty[item.id] || 0) > 0)
+      .map(item => `${state.repairQueueQty[item.id]}× ${item.name}`);
+    if (activeRepairs.length > 0) {
+      const repCost = getRepairQueueCost();
+      totals.resourcesSpent += repCost;
+      actionSummaries.push({
+        instanceId: "repair_queue",
+        title: repairProj.title,
+        optionLabel: activeRepairs.join(", "),
+        diceCount: 0,
+        bonuses: [],
+        rollTotal: null,
+        succeeded: true,
+        outcomeLabel: `Yard Order (${repCost} R)`,
+        costSpent: repCost,
+        delta: { ...createEmptyDeltas(), resourcesSpent: repCost }
+      });
+    }
   }
+
+  assignedDice += getLockedDiceCount();
 
   return {
     rollValue: rollNum,
@@ -2113,7 +2243,7 @@ function renderRoster() {
       <div class="char-header">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           <span class="char-name">${name}</span>
-          ${deployed ? `<span class="deployed-badge">On Deployment</span>` : ''}
+          ${deployed ? `<span class="deployed-badge">Deployed</span>` : ''}
         </div>
         <span class="faction-tag">${faction}</span>
       </div>
@@ -2248,7 +2378,7 @@ function renderFinalSummary() {
   }).join("");
 
   const actionsHTML = outcome.actionSummaries.length === 0
-    ? `<div class="project-card"><div class="proj-desc">No actions or direct orders assigned yet. Assign dice to projects or add Construction Queue orders to see roll-based outcomes.</div></div>`
+    ? `<div class="project-card"><div class="proj-desc">No actions or direct orders assigned yet. Assign dice to projects or add queue orders to see roll-based outcomes.</div></div>`
     : outcome.actionSummaries.map(a => `
         <div class="summary-action-card">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -2323,7 +2453,9 @@ function renderProjects() {
     const instanceNum = seenCounts[proj.id];
 
     const assignedList = inst.assignments || [];
-    const isActiveOrder = proj.isDirectOrder ? state.tieQueueQty > 0 : assignedList.length > 0;
+    const isActiveOrder = proj.orderType === "repairQueue"
+      ? getRepairQueueTotalUnits() > 0
+      : (proj.isDirectOrder ? state.tieQueueQty > 0 : assignedList.length > 0);
 
     if (state.activeTab === "Assigned Only" && !isActiveOrder) return;
     if (state.activeTab !== "All" && state.activeTab !== "Assigned Only") {
@@ -2337,6 +2469,40 @@ function renderProjects() {
     const card = document.createElement("div");
     card.className = `project-card ${isActiveOrder ? 'has-dice' : ''} ${inst.isClone ? 'is-clone' : ''}`;
 
+    if (proj.orderType === "repairQueue") {
+      const items = Array.isArray(proj.repairItems) ? proj.repairItems : [];
+      const rowsHTML = items.map(item => {
+        const qty = state.repairQueueQty[item.id] || 0;
+        const yardAvail = getYardCapacity(item.yardType);
+        const maxAllowed = Math.min(yardAvail, item.maxPerTurn || 99);
+        const yardLabel = item.yardType ? `${item.yardType[0].toUpperCase()}${item.yardType.slice(1)} Yard: ${yardAvail}` : "Yard: 0";
+        return `
+          <div class="repair-row">
+            <div>
+              <div style="font-size:0.82rem;font-weight:700;color:#fff;">${item.name}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);">${item.detail || ""} • <span style="color:${yardAvail > 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">${yardLabel}</span></div>
+            </div>
+            <div class="qty-box">
+              <button class="qty-btn" onclick="changeRepairQty('${item.id}', -1)" ${qty <= 0 ? 'disabled' : ''}>-</button>
+              <strong style="min-width:28px;text-align:center;">${qty}/${maxAllowed}</strong>
+              <button class="qty-btn" onclick="changeRepairQty('${item.id}', 1)" ${qty >= maxAllowed ? 'disabled' : ''}>+</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      card.innerHTML = `
+        <div class="proj-top">
+          <div class="proj-title">${proj.title || "Repair Queue"}</div>
+          <span class="proj-cat-badge die-Military">${proj.subCategory || proj.category || "Military"}</span>
+        </div>
+        <div class="proj-desc">${proj.desc || ""}</div>
+        <div class="repair-queue-list">${rowsHTML}</div>
+      `;
+      grid.appendChild(card);
+      return;
+    }
+
     if (proj.isDirectOrder) {
       const unitCost = proj.unitCost || 36;
       const maxQty = proj.maxQty || 8;
@@ -2349,7 +2515,7 @@ function renderProjects() {
         <div class="proj-desc">${proj.desc || ""}</div>
         <div class="order-controls">
           <div>
-            <div style="font-size:0.84rem;font-weight:700;color:#fff;">${proj.unitName || "10 TIE Fighter Squadrons"}</div>
+            <div style="font-size:0.84rem;font-weight:700;color:#fff;">${proj.unitName || "10 TIE Fighter Squadron"}</div>
             <div style="font-size:0.75rem;color:var(--accent-gold);">${unitCost} R each (Total: ${cost} R)</div>
           </div>
           <div class="qty-box">
@@ -2568,6 +2734,10 @@ function removeInstance(instanceId) {
 let draggedData = null;
 
 function handleDragStart(e, charId, dieIndex, dieType) {
+  if (isDieAssigned(charId, dieIndex)) {
+    e.preventDefault();
+    return;
+  }
   draggedData = { charId, dieIndex, dieType };
   e.dataTransfer.setData("text/plain", JSON.stringify(draggedData));
 }
@@ -2640,10 +2810,24 @@ function changeOption(instanceId, newIdx) {
 }
 
 function changeTieQty(delta) {
-  const queueDef = PROJECTS.find(p => p.isDirectOrder);
+  const queueDef = PROJECTS.find(p => p.orderType === "tieQueue" || p.id === "construction_queue");
   const maxQty = (queueDef && queueDef.maxQty) || 8;
   const next = Math.max(0, Math.min(maxQty, state.tieQueueQty + delta));
   state.tieQueueQty = next;
+  refreshAll();
+}
+
+function changeRepairQty(itemId, delta) {
+  const proj = getRepairQueueProject();
+  if (!proj || !Array.isArray(proj.repairItems)) return;
+  const item = proj.repairItems.find(r => r.id === itemId);
+  if (!item) return;
+
+  const yardAvail = getYardCapacity(item.yardType);
+  const maxAllowed = Math.min(yardAvail, item.maxPerTurn || 99);
+  const current = state.repairQueueQty[itemId] || 0;
+  const next = Math.max(0, Math.min(maxAllowed, current + delta));
+  state.repairQueueQty[itemId] = next;
   refreshAll();
 }
 
@@ -2694,6 +2878,7 @@ function clearDeployment() {
 function resetAll() {
   state.instances = createDefaultInstances(PROJECTS);
   state.tieQueueQty = 0;
+  Object.keys(state.repairQueueQty).forEach(k => { state.repairQueueQty[k] = 0; });
   state.assumedRoll = 50;
   clearDeployment();
   refreshAll();
@@ -2934,6 +3119,7 @@ function getSerializedPlan() {
     turn: state.currentTurn,
     assumedRoll: state.assumedRoll,
     tieQueueQty: state.tieQueueQty,
+    repairQueueQty: { ...state.repairQueueQty },
     instances: state.instances.map(inst => ({
       instanceId: inst.instanceId,
       projectId: inst.projectId,
@@ -3024,10 +3210,12 @@ function reconcileAssignmentsWithCurrentData() {
   if (state.deployment.commanderId && !charMap.has(state.deployment.commanderId)) {
     state.deployment.commanderId = null;
   }
-  if (state.deployment.commanderId) {
-    const cmdr = charMap.get(state.deployment.commanderId);
-    (cmdr.dice || []).forEach((_, idx) => usedDice.add(`${cmdr.id}:${idx}`));
-  }
+
+  CHARACTERS.forEach(char => {
+    if (isCharDeployed(char.id)) {
+      (char.dice || []).forEach((_, idx) => usedDice.add(`${char.id}:${idx}`));
+    }
+  });
 
   state.instances.forEach(inst => {
     const proj = getProjectDef(inst.projectId);
@@ -3106,6 +3294,20 @@ function applyPlanObject(planObj) {
 
   state.instances = rebuiltInstances;
   state.tieQueueQty = Math.max(0, Math.min(8, parseInt(planObj.tieQueueQty, 10) || 0));
+
+  const repairProj = getRepairQueueProject();
+  const nextRepairQty = {};
+  if (repairProj && Array.isArray(repairProj.repairItems)) {
+    repairProj.repairItems.forEach(item => {
+      const rawQty = planObj.repairQueueQty && planObj.repairQueueQty[item.id] !== undefined
+        ? parseInt(planObj.repairQueueQty[item.id], 10)
+        : 0;
+      const maxAllowed = Math.min(getYardCapacity(item.yardType), item.maxPerTurn || 99);
+      nextRepairQty[item.id] = Math.max(0, Math.min(maxAllowed, isNaN(rawQty) ? 0 : rawQty));
+    });
+  }
+  state.repairQueueQty = nextRepairQty;
+
   if (planObj.assumedRoll !== undefined) {
     const r = parseInt(planObj.assumedRoll, 10);
     if (!isNaN(r)) state.assumedRoll = Math.max(1, Math.min(100, r));
@@ -3168,6 +3370,7 @@ function applyPlanJsonText(rawText, sourceLabel = "JSON") {
       if (!parsed.plan && !parsed.instances) {
         state.instances = createDefaultInstances(PROJECTS);
         state.tieQueueQty = 0;
+        Object.keys(state.repairQueueQty).forEach(k => { state.repairQueueQty[k] = 0; });
         state.deployment.missionId = null;
         state.deployment.commanderId = null;
       }
@@ -3177,7 +3380,7 @@ function applyPlanJsonText(rawText, sourceLabel = "JSON") {
     applyPlanObject(planPayload);
 
     const assignedCount = state.instances.reduce((acc, i) => acc + (i.assignments ? i.assignments.length : 0), 0);
-    if (hasDatasetFields || (assignedCount === 0 && state.tieQueueQty === 0 && !state.deployment.missionId && !state.deployment.commanderId)) {
+    if (hasDatasetFields || (assignedCount === 0 && state.tieQueueQty === 0 && getRepairQueueTotalUnits() === 0 && !state.deployment.missionId && !state.deployment.commanderId)) {
       showMainGridTab("All");
     }
 
@@ -3213,7 +3416,7 @@ function formatCharWithFactionAndBonus(char, charId, dieType, bonus) {
 function buildExportBbCode(mode = "standard") {
   const includeRolls = mode === "rolls";
   let lines = [includeRolls ? `[X] Plan : Turn ${formatTurnCode(state.currentTurn)} Orders (With Rolls)` : `[X] Plan : Turn ${formatTurnCode(state.currentTurn)} Orders`];
-  let totalCost = state.tieQueueQty * 36;
+  let totalCost = state.tieQueueQty * 36 + getRepairQueueCost();
   let anyAction = false;
 
   const grouped = {};
@@ -3269,9 +3472,26 @@ function buildExportBbCode(mode = "standard") {
     grouped[cat].push(entry);
   });
 
+  const repairProj = getRepairQueueProject();
+  if (repairProj && Array.isArray(repairProj.repairItems)) {
+    const activeRepairs = repairProj.repairItems
+      .filter(item => (state.repairQueueQty[item.id] || 0) > 0)
+      .map(item => {
+        const qty = state.repairQueueQty[item.id];
+        const cost = qty * (item.unitCost || 0);
+        return `${qty}x ${item.name} [${cost} R]`;
+      });
+    if (activeRepairs.length > 0) {
+      anyAction = true;
+      const cat = "Military — Imperial Navy";
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(`--[X] Repair Queue — ${activeRepairs.join(", ")}`);
+    }
+  }
+
   if (state.tieQueueQty > 0) {
     anyAction = true;
-    const queueDef = PROJECTS.find(p => p.isDirectOrder) || { unitName: "10 TIE Fighter Squadrons", unitCost: 36 };
+    const queueDef = PROJECTS.find(p => p.orderType === "tieQueue" || p.id === "construction_queue") || { unitName: "10 TIE Fighter Squadron", unitCost: 36 };
     const unitCost = queueDef.unitCost || 36;
     const cat = "Military — Imperial Navy";
     if (!grouped[cat]) grouped[cat] = [];
