@@ -1,0 +1,993 @@
+{
+  "turn": 1,
+  "baseStats": {
+    "resourcesTurn": 0,
+    "resourcesReserve": 20325,
+    "psCurrent": 95,
+    "psMax": 100,
+    "unrest": 4,
+    "corruption": 0,
+    "basing": -23,
+    "citizens": 415,
+    "menials": 3,
+    "logistics": 33,
+    "food": -55,
+    "foodStockpile": 330,
+    "foodRationing": "Light Rationing",
+    "health": -20,
+    "healthStockpile": 100,
+    "healthRationing": "Rationing",
+    "consumerGoods": -38,
+    "capitalGoods": 33,
+    "strategicGoods": 18,
+    "shipyardParts": 57,
+    "beskar": 10
+  },
+  "characters": [
+    {
+      "id": "holt",
+      "name": "Leona Holt",
+      "rankTitle": "Grand Admiral Leona Holt (Tier 3)",
+      "deployable": true,
+      "faction": "Leona Loyalists",
+      "desc": "+3 Free Dice, +5 Bonus to all dice, +10 Military, +5 Intelligence, +20 Imperial Navy projects.",
+      "dice": ["Free", "Free", "Free"],
+      "bonusRules": [
+        { "value": 5 },
+        { "category": "Military", "value": 10 },
+        { "category": "Intelligence", "value": 5 },
+        { "subCategory": "Imperial Navy", "value": 20 }
+      ]
+    },
+    {
+      "id": "sloane",
+      "name": "Rae Sloane",
+      "rankTitle": "Admiral Rae Sloane (Tier 2)",
+      "deployable": true,
+      "faction": "Pragmatic Reformist",
+      "desc": "+1 Military Die, +1 Free Die, +15 Bonus to Military, -10 Penalty to Intelligence.",
+      "dice": ["Military", "Free"],
+      "bonusRules": [
+        { "category": "Military", "value": 15 },
+        { "category": "Intelligence", "value": -10 }
+      ]
+    },
+    {
+      "id": "versio",
+      "name": "Garrick Versio",
+      "rankTitle": "Admiral Garrick Versio (Tier 1)",
+      "deployable": true,
+      "faction": "True Believer",
+      "desc": "+1 Military Die, +1 Intelligence Die, +11 Bonus to Intelligence, +10 Bonus to Military.",
+      "dice": ["Military", "Intelligence"],
+      "bonusRules": [
+        { "category": "Intelligence", "value": 11 },
+        { "category": "Military", "value": 10 }
+      ]
+    },
+    {
+      "id": "pellaeon",
+      "name": "Gilad Pellaeon",
+      "rankTitle": "Gilad Pellaeon",
+      "deployable": false,
+      "faction": "Dutiful Careerist",
+      "desc": "+1 Military Die, +1 Administration Die, +5 Administration, +10 Military, +10 Imperial Navy projects.",
+      "dice": ["Military", "Administration"],
+      "bonusRules": [
+        { "category": "Administration", "value": 5 },
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Navy", "value": 10 }
+      ]
+    },
+    {
+      "id": "rogriss",
+      "name": "Teren Rogriss",
+      "rankTitle": "Admiral Teren Rogriss (Tier 2)",
+      "deployable": true,
+      "faction": "Dutiful Careerist",
+      "desc": "+1 Military Die, +1 Infrastructure Die, +5 Infrastructure, +10 Military, +10 Imperial Navy projects.",
+      "dice": ["Military", "Infrastructure"],
+      "bonusRules": [
+        { "category": "Infrastructure", "value": 5 },
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Navy", "value": 10 }
+      ]
+    },
+    {
+      "id": "veers",
+      "name": "Maximilian Veers",
+      "rankTitle": "General Maximilian Veers (Tier 2)",
+      "deployable": true,
+      "faction": "Dutiful Careerist",
+      "desc": "+1 Military Die, +10 Bonus to Military, +10 Bonus to Imperial Army projects.",
+      "dice": ["Military"],
+      "bonusRules": [
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Army", "value": 10 }
+      ]
+    },
+    {
+      "id": "pryde",
+      "name": "Enric Pryde",
+      "rankTitle": "Enric Pryde",
+      "deployable": false,
+      "faction": "True Believer",
+      "desc": "+1 Military Die, +10 Bonus to Military, +10 Bonus to Imperial Navy projects.",
+      "dice": ["Military"],
+      "bonusRules": [
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Navy", "value": 10 }
+      ]
+    },
+    {
+      "id": "hata",
+      "name": "Mari Hata",
+      "rankTitle": "Mari Hata",
+      "deployable": false,
+      "faction": "True Believer",
+      "desc": "+1 Free Die, +10 Bonus to Intelligence and Administration.",
+      "dice": ["Free"],
+      "bonusRules": [
+        { "category": "Intelligence", "value": 10 },
+        { "category": "Administration", "value": 10 }
+      ]
+    },
+    {
+      "id": "jade",
+      "name": "Mara Jade",
+      "rankTitle": "Mara Jade",
+      "deployable": false,
+      "faction": "Pragmatic Reformers",
+      "desc": "+1 Free Die, +11 Bonus to Intelligence and Military.",
+      "dice": ["Free"],
+      "bonusRules": [
+        { "category": "Intelligence", "value": 11 },
+        { "category": "Military", "value": 11 }
+      ]
+    },
+    {
+      "id": "gideon",
+      "name": "Gideon",
+      "rankTitle": "Moff Gideon (Tier 1)",
+      "deployable": true,
+      "faction": "True Believer",
+      "desc": "+1 Industry Die, +1 Services Die, +10 Bonus to Industry, +10 Bonus to Services.",
+      "dice": ["Industry", "Services"],
+      "bonusRules": [
+        { "category": "Industry", "value": 10 },
+        { "category": "Services", "value": 10 }
+      ]
+    },
+    {
+      "id": "fel",
+      "name": "Soontir Fel (& Maarek Stele)",
+      "rankTitle": "Colonel Soontir Fel (Tier 1)",
+      "deployable": true,
+      "faction": "Pragmatic Reformist",
+      "desc": "+2 Free Dice, +10 Bonus to Military Dice.",
+      "dice": ["Free", "Free"],
+      "bonusRules": [
+        { "category": "Military", "value": 10 }
+      ]
+    },
+    {
+      "id": "wessex",
+      "name": "Lira Wessex",
+      "rankTitle": "Lira Wessex",
+      "deployable": false,
+      "faction": "Dutiful Careerist",
+      "desc": "+1 Military Die, +1 Industry Die, +10 Industry, -20 Military, +40 starship-related projects.",
+      "dice": ["Military", "Industry"],
+      "bonusRules": [
+        { "category": "Industry", "value": 10 },
+        { "category": "Military", "value": -20 },
+        { "tag": "starship", "value": 40 }
+      ]
+    },
+    {
+      "id": "elsbeth",
+      "name": "Morgan Elsbeth",
+      "rankTitle": "Morgan Elsbeth",
+      "deployable": false,
+      "faction": "Sith Cultist",
+      "desc": "+1 Military Die, +1 Industry Die, +11 Industry, -20 Military, +40 starfighter-related projects.",
+      "dice": ["Military", "Industry"],
+      "bonusRules": [
+        { "category": "Industry", "value": 11 },
+        { "category": "Military", "value": -20 },
+        { "tag": "starfighter", "value": 40 }
+      ]
+    },
+    {
+      "id": "gaarn",
+      "name": "Roderick Gaarn",
+      "rankTitle": "Admiral Roderick Gaarn (Tier 1)",
+      "deployable": true,
+      "faction": "Leona Loyalists",
+      "desc": "+1 Intelligence Die, +1 Military Die, +5 Intelligence, +10 Military, +10 Imperial Navy projects.",
+      "dice": ["Intelligence", "Military"],
+      "bonusRules": [
+        { "category": "Intelligence", "value": 5 },
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Navy", "value": 10 }
+      ]
+    },
+    {
+      "id": "niovi",
+      "name": "Gastos Niovi",
+      "rankTitle": "General Gastos Niovi (Tier 1)",
+      "deployable": true,
+      "faction": "Leona Loyalists",
+      "desc": "+1 Services Die, +1 Military Die, +5 Services, +10 Military, +10 Imperial Army projects.",
+      "dice": ["Services", "Military"],
+      "bonusRules": [
+        { "category": "Services", "value": 5 },
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Army", "value": 10 }
+      ]
+    },
+    {
+      "id": "oxtroe",
+      "name": "Betl Oxtroe",
+      "rankTitle": "Admiral Betl Oxtroe (Tier 1)",
+      "deployable": true,
+      "faction": "Pragmatic Reformist",
+      "desc": "+1 Administration Die, +1 Military Die, +5 Administration, +10 Military, +10 Imperial Navy projects.",
+      "dice": ["Administration", "Military"],
+      "bonusRules": [
+        { "category": "Administration", "value": 5 },
+        { "category": "Military", "value": 10 },
+        { "subCategory": "Imperial Navy", "value": 10 }
+      ]
+    },
+    {
+      "id": "kdy",
+      "name": "Kuat Drive Yards",
+      "rankTitle": "Kuat Drive Yards",
+      "deployable": false,
+      "faction": "Dutiful Careerist",
+      "desc": "+1 Industry Die, +1 Infrastructure Die, +10 Industry, +10 Infrastructure.",
+      "dice": ["Industry", "Infrastructure"],
+      "bonusRules": [
+        { "category": "Industry", "value": 10 },
+        { "category": "Infrastructure", "value": 10 }
+      ]
+    },
+    {
+      "id": "kuati",
+      "name": "Kuati Diaspora",
+      "rankTitle": "Kuati Diaspora",
+      "deployable": false,
+      "faction": "Leona Loyalists",
+      "desc": "+1 Administration Die, +1 Infrastructure Die, +10 Administration, +10 Infrastructure.",
+      "dice": ["Administration", "Infrastructure"],
+      "bonusRules": [
+        { "category": "Administration", "value": 10 },
+        { "category": "Infrastructure", "value": 10 }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "coromul_col",
+      "title": "Coromul Colonisation (Phase 1)",
+      "category": "Infrastructure",
+      "desc": "Turn subterranean caverns of Coromul into new housing and basing.",
+      "options": [
+        { "label": "Standard (0/75)", "cost": 5, "maxDice": 99, "effects": "+5 Basing, -1 Logistics" },
+        { "label": "Imperial (1 Die)", "cost": 7, "maxDice": 1, "effects": "+5 Basing, -1 Logistics, Small Corruption" }
+      ]
+    },
+    {
+      "id": "space_facility",
+      "title": "Space Facility Construction (Phase 1)",
+      "category": "Infrastructure",
+      "desc": "Constructing space stations in orbit is less resource-heavy than on Ilum or Mechdol.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 10, "maxDice": 99, "effects": "+5 Basing, -1 Logistics" },
+        { "label": "Imperial (1 Die)", "cost": 30, "maxDice": 1, "effects": "+5 Basing, -1 Logistics, Small Corruption" }
+      ]
+    },
+    {
+      "id": "viltitus_palace",
+      "title": "Viltitus Imperial Palace (Stage 1 of 3)",
+      "category": "Infrastructure",
+      "desc": "Build a palace worthy of the new capital of the Imperial Regency.",
+      "options": [
+        { "label": "Stage 1 (0/150)", "cost": 15, "maxDice": 99, "effects": "+5 Basing, +2 Consumer Goods, -1 Cap Goods, -1 Logistics" },
+        { "label": "Stage 2 (0/300)", "cost": 15, "maxDice": 99, "effects": "+10 Basing, +5 Consumer Goods, -1 Menials, -3 Cap Goods, -2 Logistics" },
+        { "label": "Stage 3 (0/450)", "cost": 15, "maxDice": 99, "effects": "+15 Basing, +10 Consumer Goods, +4 Health, -1 Citizens, -3 Menials, -1 Strat, -3 Cap, -3 Log" }
+      ]
+    },
+    {
+      "id": "viltitus_farmland",
+      "title": "Develop Viltitus Farmland (Phase 1)",
+      "category": "Infrastructure",
+      "desc": "Clear lethal jungle on Viltitus to grow imported crops in its fertile soil.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 5, "maxDice": 99, "effects": "-1 Menials, +5 Food, +1 Consumer Goods" },
+        { "label": "Imperial (1 Die)", "cost": 10, "maxDice": 1, "effects": "-1 Menials, +5 Food, +1 Consumer Goods, Small Corruption" }
+      ]
+    },
+    {
+      "id": "agri_facilities",
+      "title": "Develop Agricultural Facilities (Phase 1)",
+      "category": "Infrastructure",
+      "desc": "Construct environmentally sealed greenhouses on other worlds and space stations.",
+      "options": [
+        { "label": "Standard (0/200)", "cost": 10, "maxDice": 99, "effects": "+7 Food, +2 Consumer Goods, -1 Cap, -1 Cit, -1 Log, -1 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 40, "maxDice": 1, "effects": "+7 Food, +2 Consumer Goods, -1 Cap, -1 Cit, -1 Log, -1 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "water_purification",
+      "title": "Water Purification Plants (Stage 1 of 4)",
+      "category": "Infrastructure",
+      "desc": "Treat toxic planetary water to improve public health.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 10, "maxDice": 99, "effects": "+5 Health, -1 Cap Goods, -1 Menials, -1 Logistics, -3 Basing" }
+      ]
+    },
+    {
+      "id": "surface_spaceports",
+      "title": "Surface Spaceports (Phase 1)",
+      "category": "Infrastructure",
+      "desc": "Basic landing bays and hangars in safe zones to ease orbit-to-surface cargo.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 15, "maxDice": 99, "effects": "+3 Logistics" }
+      ]
+    },
+    {
+      "id": "capital_spaceports",
+      "title": "Capital Spaceports (Stage 1 of 4)",
+      "category": "Infrastructure",
+      "desc": "Proper spaceport for capital-grade starships.",
+      "options": [
+        { "label": "Standard (0/300)", "cost": 20, "maxDice": 99, "effects": "+12 Logistics, -1 Cap Goods, -1 Citizens, -2 Basing" }
+      ]
+    },
+    {
+      "id": "imperial_monuments",
+      "title": "Imperial Monuments (Stage 1 of 4)",
+      "category": "Infrastructure",
+      "desc": "Construct statues and signs of the New Order's superiority.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 5, "maxDice": 99, "effects": "+3 PS, -1 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 10, "maxDice": 1, "effects": "+4 PS, -1 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "luxury_quarters",
+      "title": "Luxury Quarters",
+      "category": "Infrastructure",
+      "desc": "Residences befitting Imperial officers and officials.",
+      "options": [
+        { "label": "Standard (0/200)", "cost": 20, "maxDice": 99, "effects": "+5 PS, +5 Consumer Goods, -3 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 80, "maxDice": 1, "effects": "+6 PS, +5 Consumer Goods, -3 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "trantor_depot",
+      "title": "Use Trantor-class Supertanker Fuel Depot",
+      "category": "Infrastructure",
+      "desc": "Massive ISD-sized station provided by Pentastar Alignment. Use for housing OR supplies.",
+      "options": [
+        { "label": "Standard: Housing (0/50)", "cost": 10, "maxDice": 99, "effects": "+20 Basing" },
+        { "label": "Imperial: Housing (1 Die)", "cost": 10, "maxDice": 1, "effects": "+20 Basing, Small Corruption" },
+        { "label": "Standard: Supplies (0/50)", "cost": 5, "maxDice": 99, "effects": "+20 Logistics" },
+        { "label": "Imperial: Supplies (1 Die)", "cost": 5, "maxDice": 1, "effects": "+20 Logistics, Small Corruption" }
+      ]
+    },
+    {
+      "id": "civ_shipyards",
+      "title": "Build Civilian Shipyards (Phase 1)",
+      "category": "Industry",
+      "tags": ["starship"],
+      "desc": "Build freighters, passenger ships, and civilian vessels.",
+      "options": [
+        { "label": "Standard (0/200)", "cost": 20, "maxDice": 99, "effects": "+12 Logistics, -1 Strat, -3 Cap, -3 Cit, -3 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 80, "maxDice": 1, "effects": "+12 Logistics, -1 Strat, -3 Cap, -3 Cit, -3 Basing, Small Corruption" },
+        { "label": "Rebuild (100/200) [1 Shipyard Part]", "cost": 20, "maxDice": 99, "effects": "+12 Logistics, -1 Cap, -3 Cit, -3 Basing" }
+      ]
+    },
+    {
+      "id": "surface_prospecting",
+      "title": "Perform Surface Prospecting",
+      "category": "Industry",
+      "desc": "Survey planetary surfaces for valuable resource deposits.",
+      "options": [
+        { "label": "Coromul (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Coromul surface deposits" },
+        { "label": "Ilum (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Ilum surface deposits" },
+        { "label": "Mechdol (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Mechdol surface deposits" },
+        { "label": "Viltitus (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Viltitus surface deposits" }
+      ]
+    },
+    {
+      "id": "space_prospecting",
+      "title": "Perform Space Prospecting",
+      "category": "Industry",
+      "desc": "Survey star systems for valuable space resource deposits.",
+      "options": [
+        { "label": "Coromul System (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Coromul space deposits" },
+        { "label": "Ilum System (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Ilum space deposits" },
+        { "label": "Mechdol System (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Mechdol space deposits" },
+        { "label": "Viltitus System (0/100)", "cost": 5, "maxDice": 99, "effects": "Discover Viltitus space deposits" }
+      ]
+    },
+    {
+      "id": "class5_droids",
+      "title": "Class 5 Droid Factory",
+      "category": "Industry",
+      "desc": "Produce simple labour droids for dangerous/undesirable jobs.",
+      "options": [
+        { "label": "Standard (0/250)", "cost": 20, "maxDice": 99, "effects": "+10 R/Turn, +2 Cap Goods, +12 Menials, -1 Cit, -3 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 100, "maxDice": 1, "effects": "+10 R/Turn, +2 Cap Goods, +12 Menials, -1 Cit, -3 Basing, Mod. Corruption" }
+      ]
+    },
+    {
+      "id": "class2_droids",
+      "title": "Class 2 Droid Factory",
+      "category": "Industry",
+      "desc": "Produce specialised engineering and tactical droids.",
+      "options": [
+        { "label": "Standard (0/250)", "cost": 20, "maxDice": 99, "effects": "+10 R/Turn, +10 Cap Goods, +4 Menials, -1 Cit, -3 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 100, "maxDice": 1, "effects": "+10 R/Turn, +10 Cap Goods, +4 Menials, -1 Cit, -3 Basing, Mod. Corruption" }
+      ]
+    },
+    {
+      "id": "medical_droids",
+      "title": "Medical Droid Factory",
+      "category": "Industry",
+      "desc": "Produce auxiliary medical droids to assist human staff.",
+      "options": [
+        { "label": "Standard (0/250)", "cost": 20, "maxDice": 99, "effects": "+10 R/Turn, +4 Health, -1 Cap Goods, -1 Cit, -2 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 100, "maxDice": 1, "effects": "+10 R/Turn, +4 Health, -1 Cap Goods, -1 Cit, -2 Basing, Mod. Corruption" }
+      ]
+    },
+    {
+      "id": "durasteel_foundries",
+      "title": "Durasteel Foundries (Stage 1 of 5)",
+      "category": "Industry",
+      "desc": "Massive industrial forges vital to Regency production.",
+      "options": [
+        { "label": "Standard: Stage 1 (0/100)", "cost": 20, "maxDice": 99, "effects": "+10 R/Turn, +1 Strat Goods, +2 Cap Goods, -2 Cit, -1 Basing" },
+        { "label": "Imperial: Stage 1 (1 Die)", "cost": 40, "maxDice": 1, "effects": "+10 R/Turn, +1 Strat Goods, +2 Cap Goods, -2 Cit, -1 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "commercial_plants",
+      "title": "Commercial Production Plants (Phase 1)",
+      "category": "Industry",
+      "desc": "Produce civilian consumer goods to ease severe shortages.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 10, "maxDice": 99, "effects": "+4 Consumer Goods, -1 Cap Goods, -1 Cit, -1 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 20, "maxDice": 1, "effects": "+4 Consumer Goods, -1 Cap Goods, -1 Cit, -1 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "compnor_office",
+      "title": "Set up COMPNOR Office",
+      "category": "Intelligence",
+      "desc": "Propaganda branch to steer public discourse.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 10, "maxDice": 99, "effects": "+5 PS" }
+      ]
+    },
+    {
+      "id": "isb_office",
+      "title": "Set up ISB Office",
+      "category": "Intelligence",
+      "desc": "Internal security bureau to ensure loyalty and root out spies.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 10, "maxDice": 99, "effects": "+3 PS" }
+      ]
+    },
+    {
+      "id": "iis_office",
+      "title": "Insert IIS Office",
+      "category": "Intelligence",
+      "desc": "Imperial Intelligence Service to track external enemies and warlords.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 10, "maxDice": 99, "effects": "+3 PS" }
+      ]
+    },
+    {
+      "id": "infiltration",
+      "title": "Infiltration (Stage 1 of 5)",
+      "category": "Intelligence",
+      "desc": "Covertly infiltrate rival factions (Using >1 die on a single target heightens detection risk).",
+      "options": [
+        { "label": "True Empire (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate True Empire" },
+        { "label": "Corellian Empire (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Corellian Empire" },
+        { "label": "Azure Imperium (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Azure Imperium" },
+        { "label": "Zero Command (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Zero Command" },
+        { "label": "Shadow Empire (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Shadow Empire" },
+        { "label": "Iron Empire (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Iron Empire" },
+        { "label": "Rothana Authority (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Rothana Authority" },
+        { "label": "Eriadu Authority (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Eriadu Authority" },
+        { "label": "Pentastar Alignment (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Pentastar Alignment" },
+        { "label": "Lankin's Kingdom (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Lankin's Kingdom" },
+        { "label": "Greater Maldrood (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Greater Maldrood" },
+        { "label": "Zsinj's Empire (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Zsinj's Empire" },
+        { "label": "Ciutric Hegemony (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Ciutric Hegemony" },
+        { "label": "Imperial Insurgency (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Imperial Insurgency" },
+        { "label": "New Republic (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate New Republic" },
+        { "label": "Corporate Sector (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Corporate Sector" },
+        { "label": "Megacorps (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Megacorps" },
+        { "label": "Hutts (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Hutts" },
+        { "label": "Black Sun (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Black Sun" },
+        { "label": "Pyke Syndicate (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Pyke Syndicate" },
+        { "label": "Hapes Consortium (Stage 1) (0/100)", "cost": 10, "maxDice": 99, "effects": "Infiltrate Hapes Consortium" }
+      ]
+    },
+    {
+      "id": "security_reviews",
+      "title": "Security Reviews",
+      "category": "Intelligence",
+      "desc": "Ensure no leaks or spies compromise Project First Order.",
+      "options": [
+        { "label": "Standard (1 Die) (DC 60)", "cost": 20, "maxDice": 1, "effects": "Counter-espionage check (DC 60)" }
+      ]
+    },
+    {
+      "id": "basic_medical",
+      "title": "Basic Medical Facilities",
+      "category": "Services",
+      "desc": "Local treatment of illnesses and injuries for a healthier workforce.",
+      "options": [
+        { "label": "Standard (0/200)", "cost": 15, "maxDice": 99, "effects": "+6 Health, -1 Cap Goods, -1 Cit, -1 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 60, "maxDice": 1, "effects": "+6 Health, -1 Cap Goods, -1 Cit, -1 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "food_rationing",
+      "title": "Introduce Food Rationing",
+      "category": "Services",
+      "desc": "Increase rationing severity to save food at the cost of health and support.",
+      "options": [
+        { "label": "Moderate (1 Die)", "cost": 0, "maxDice": 1, "effects": "+15 Food, -2 Health, -5 PS" },
+        { "label": "Harsh (1 Die)", "cost": 0, "maxDice": 1, "effects": "+30 Food, -5 Health, -10 PS" }
+      ]
+    },
+    {
+      "id": "remove_rationing",
+      "title": "Remove Rationing",
+      "category": "Services",
+      "desc": "Lift unpopular rationing policies to boost morale and quality of life.",
+      "options": [
+        { "label": "Remove Light Food Rationing (1 Die)", "cost": 0, "maxDice": 1, "effects": "-15 Food, Improves Image/QoL" },
+        { "label": "Remove Medical Rationing (1 Die)", "cost": 0, "maxDice": 1, "effects": "-20 Health, Improves Image/QoL" }
+      ]
+    },
+    {
+      "id": "childcare_program",
+      "title": "Childcare Program",
+      "category": "Services",
+      "desc": "Free up parents in the expedition to take on productive jobs.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 10, "maxDice": 99, "effects": "+2 Citizens, -1 PS" },
+        { "label": "Imperial (1 Die)", "cost": 20, "maxDice": 1, "effects": "+2 Citizens, -1 PS, Small Corruption" }
+      ]
+    },
+    {
+      "id": "tech_education",
+      "title": "Technical Education Programs",
+      "category": "Services",
+      "desc": "Teach workers better equipment maintenance to free up hardware.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 10, "maxDice": 99, "effects": "+1 Capital Goods" },
+        { "label": "Imperial (1 Die)", "cost": 30, "maxDice": 1, "effects": "+1 Capital Goods, Small Corruption" }
+      ]
+    },
+    {
+      "id": "luxury_venues",
+      "title": "Luxury Venues",
+      "category": "Services",
+      "desc": "Establishments suitable for Imperial elites to appease their station.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 15, "maxDice": 99, "effects": "+5 PS, +2 Consumer Goods, -4 Food, -2 Basing" },
+        { "label": "Imperial (1 Die)", "cost": 45, "maxDice": 1, "effects": "+6 PS, +2 Consumer Goods, -4 Food, -2 Basing, Small Corruption" }
+      ]
+    },
+    {
+      "id": "hyperlane_beacons",
+      "title": "Set-Up Hyperlane Route Beacons",
+      "category": "Administration",
+      "desc": "Set up beacons along hyperlanes for easier fleet access to and from the known galaxy.",
+      "options": [
+        { "label": "Bastion: Pentastar Alignment (0/200)", "cost": 15, "maxDice": 99, "effects": "Hyperlane connection to Pentastar Alignment" },
+        { "label": "Rago: Shadow Empire (0/200)", "cost": 15, "maxDice": 99, "effects": "Hyperlane connection to Shadow Empire" },
+        { "label": "Jakku: Neutral (0/200)", "cost": 15, "maxDice": 99, "effects": "Hyperlane connection to Jakku" }
+      ]
+    },
+    {
+      "id": "eclipse_databanks",
+      "title": "Eclipse Databanks",
+      "category": "Administration",
+      "desc": "Decrypt Emperor Palpatine's secret locations, schematics, and vaults aboard the Eclipse.",
+      "options": [
+        { "label": "Location Aurek (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Secret Location Aurek" },
+        { "label": "Location Besh (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Secret Location Besh" },
+        { "label": "Location Cherek (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Secret Location Cherek" },
+        { "label": "Location Dorn (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Secret Location Dorn" },
+        { "label": "TIE Defender schematics (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock TIE Defender schematics", "isStarfighter": true },
+        { "label": "TIE Advanced schematics (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock TIE Advanced schematics", "isStarfighter": true },
+        { "label": "TIE Phantom schematics (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock TIE Phantom schematics", "isStarfighter": true },
+        { "label": "Missile Boat schematics (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Missile Boat schematics", "isStarfighter": true },
+        { "label": "Vault Aurek (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Aurek" },
+        { "label": "Vault Besh (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Besh" },
+        { "label": "Vault Cresh (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Cresh" },
+        { "label": "Vault Cherek (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Cherek" },
+        { "label": "Vault Dorn (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Dorn" },
+        { "label": "Vault Esk (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Esk" },
+        { "label": "Vault Enth (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Enth" },
+        { "label": "Vault Onith (0/100)", "cost": 15, "maxDice": 99, "effects": "Unlock Emperor's Vault Onith" }
+      ]
+    },
+    {
+      "id": "raising_heiress",
+      "title": "Raising the Heiress",
+      "category": "Administration",
+      "desc": "Assign a mentor to raise Ederlathh Pallopides, Palpatine's great-niece and nominal Regency leader.",
+      "options": [
+        { "label": "Assign Mentor (1 Die)", "cost": 0, "maxDice": 1, "effects": "Shapes the future Empress" }
+      ]
+    },
+    {
+      "id": "political_payments",
+      "title": "Political Payments",
+      "category": "Administration",
+      "desc": "Reward loyalty with large credit bonuses to shore up political support.",
+      "options": [
+        { "label": "Standard (1 Die)", "cost": 100, "maxDice": 1, "effects": "+5 PS, Large rise in Corruption" }
+      ]
+    },
+    {
+      "id": "fight_corruption",
+      "title": "Fight Corruption",
+      "category": "Administration",
+      "desc": "Enforce Imperial law and regulations to purge corruption (Costs 3 PS per Die).",
+      "options": [
+        { "label": "Standard (DC 100) [3 PS/Die]", "cost": 0, "psCost": 3, "maxDice": 99, "effects": "Large reduction in Corruption (-3 PS/Die)" }
+      ]
+    },
+    {
+      "id": "turbolaser_net",
+      "title": "Turbolaser Ground Network (Phase 1)",
+      "category": "Military",
+      "desc": "Planetary defence batteries around key sites on Viltitus.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 20, "maxDice": 99, "effects": "-1 Capital Goods, Ground/Atmo Defense" },
+        { "label": "Imperial (1 Die)", "cost": 40, "maxDice": 1, "effects": "-1 Capital Goods, Small Corruption" }
+      ]
+    },
+    {
+      "id": "orbital_defences",
+      "title": "Orbital Defences (Phase 1)",
+      "category": "Military",
+      "desc": "Armed orbital defence stations around Viltitus.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 20, "maxDice": 99, "effects": "-1 Capital Goods, Orbital Garrison" },
+        { "label": "Imperial (1 Die)", "cost": 60, "maxDice": 1, "effects": "-1 Capital Goods, Small Corruption" }
+      ]
+    },
+    {
+      "id": "primary_space_station",
+      "title": "Space Station (Stage 1 of 5)",
+      "category": "Military",
+      "desc": "Primary defensive command station above Viltitus.",
+      "options": [
+        { "label": "Standard: Stage 1 (0/100)", "cost": 20, "maxDice": 99, "effects": "-1 Cap Goods, -1 Cit, -1 Strat Goods" },
+        { "label": "Imperial: Stage 1 (1 Die)", "cost": 40, "maxDice": 1, "effects": "-1 Cap Goods, -1 Cit, -1 Strat Goods, Small Corruption" }
+      ]
+    },
+    {
+      "id": "military_academy",
+      "title": "Imperial Military Academy of Viltitus",
+      "category": "Military",
+      "desc": "Train new pilots, troopers, and officers to fill severe shortages.",
+      "options": [
+        { "label": "TIE Pilot Training (0/300) [Starfighter]", "cost": 20, "maxDice": 99, "effects": "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing", "isStarfighter": true },
+        { "label": "Stormtrooper Training (0/300)", "cost": 20, "maxDice": 99, "effects": "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
+        { "label": "Imperial Army Training (0/300)", "cost": 20, "maxDice": 99, "effects": "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
+        { "label": "Imperial Navy Training (0/300)", "cost": 20, "maxDice": 99, "effects": "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
+        { "label": "Commando Training (0/300)", "cost": 20, "maxDice": 99, "effects": "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" }
+      ]
+    },
+    {
+      "id": "royal_guard_academy",
+      "title": "Imperial Royal Guard Academy",
+      "category": "Military",
+      "desc": "Relocated from Yinchorr; establish pipeline for elite Royal Guards.",
+      "options": [
+        { "label": "Standard (0/150)", "cost": 15, "maxDice": 99, "effects": "-1 Capital Goods, -1 Basing" }
+      ]
+    },
+    {
+      "id": "dark_trooper_project",
+      "title": "Dark Trooper Project",
+      "category": "Military",
+      "desc": "Set up Moff Gideon's Dark Trooper facilities on Viltitus.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 20, "maxDice": 99, "effects": "-1 Capital Goods, -1 Basing" }
+      ]
+    },
+    {
+      "id": "patrol_unknown",
+      "title": "Patrol the Unknown Regions",
+      "category": "Military",
+      "desc": "Active patrols to map hazards and avoid ambushes.",
+      "options": [
+        { "label": "Standard (1 Die) (DC 30/50/80/120)", "cost": 5, "maxDice": 1, "effects": "Map Unknown Regions & Threats" }
+      ]
+    },
+    {
+      "id": "army_review",
+      "title": "Army Military Review",
+      "category": "Military",
+      "subCategory": "Imperial Army",
+      "desc": "Review usage of the Imperial Army going forward.",
+      "options": [
+        { "label": "Standard (1 Die)", "cost": 5, "maxDice": 1, "effects": "Army Doctrine Reform" }
+      ]
+    },
+    {
+      "id": "stormtrooper_review",
+      "title": "Stormtrooper Military Review",
+      "category": "Military",
+      "subCategory": "Imperial Army",
+      "desc": "Review usage of the Stormtrooper Corps going forward.",
+      "options": [
+        { "label": "Standard (1 Die)", "cost": 5, "maxDice": 1, "effects": "Stormtrooper Doctrine Reform" }
+      ]
+    },
+    {
+      "id": "army_facilities",
+      "title": "Imperial Army Training Facilities",
+      "category": "Military",
+      "subCategory": "Imperial Army",
+      "desc": "Ranges and drill grounds for Imperial Army recruits.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 10, "maxDice": 99, "effects": "-3 Basing" }
+      ]
+    },
+    {
+      "id": "stormtrooper_facilities",
+      "title": "Stormtrooper Training Facilities",
+      "category": "Military",
+      "subCategory": "Imperial Army",
+      "desc": "Ranges and drill grounds for Stormtrooper Corps.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 15, "maxDice": 99, "effects": "-2 Basing" }
+      ]
+    },
+    {
+      "id": "navy_review",
+      "title": "Navy Military Review",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "desc": "Review usage of the Imperial Navy going forward.",
+      "options": [
+        { "label": "Standard (1 Die)", "cost": 0, "maxDice": 1, "effects": "Naval Doctrine Reform" }
+      ]
+    },
+    {
+      "id": "supercapital_yard",
+      "title": "Supercapital Yard",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "desc": "Required to finish the Eclipse SSD and repair Super Star Destroyers.",
+      "options": [
+        { "label": "Standard (0/1,500)", "cost": 20, "maxDice": 99, "effects": "1 Supercapital Slot (-8 Strat, -20 Cap, -10 Cit, -10 Bas, -8 Log)" },
+        { "label": "Imperial (1 Die)", "cost": 600, "maxDice": 1, "effects": "1 Supercapital Slot (Gargantuan Corruption)" },
+        { "label": "Rebuild (800/1,500) [8 Shipyard Parts]", "cost": 20, "maxDice": 99, "effects": "1 Supercapital Slot (-4 Cap, -10 Cit, -10 Bas, -8 Log)" }
+      ]
+    },
+    {
+      "id": "capital_yard",
+      "title": "Capital Yard (Phase 1)",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "desc": "Build or service Star Destroyers and capital ships.",
+      "options": [
+        { "label": "Standard (0/600)", "cost": 20, "maxDice": 99, "effects": "1 Capital Slot (-5 Strat, -10 Cap, -5 Cit, -5 Bas, -4 Log)" },
+        { "label": "Imperial (1 Die)", "cost": 240, "maxDice": 1, "effects": "1 Capital Slot (Massive Corruption)" },
+        { "label": "Rebuild (400/600) [4 Shipyard Parts]", "cost": 20, "maxDice": 99, "effects": "1 Capital Slot (-1 Strat, -2 Cap, -5 Cit, -5 Bas, -4 Log)" }
+      ]
+    },
+    {
+      "id": "cruiser_yard",
+      "title": "Cruiser Yard (Phase 1)",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "desc": "Build or service Victory SDs and Heavy Cruisers.",
+      "options": [
+        { "label": "Standard (0/300)", "cost": 20, "maxDice": 99, "effects": "1 Cruiser Slot (-3 Strat, -6 Cap, -3 Cit, -5 Bas, -4 Log)" },
+        { "label": "Imperial (1 Die)", "cost": 120, "maxDice": 1, "effects": "1 Cruiser Slot (Large Corruption)" },
+        { "label": "Rebuild (200/300) [2 Shipyard Parts]", "cost": 20, "maxDice": 99, "effects": "1 Cruiser Slot (-1 Strat, -2 Cap, -3 Cit, -5 Bas, -4 Log)" }
+      ]
+    },
+    {
+      "id": "escort_yard",
+      "title": "Escort Yard (Phase 1)",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "desc": "Build or service up to four Escort-grade warships.",
+      "options": [
+        { "label": "Standard (0/200)", "cost": 20, "maxDice": 99, "effects": "4 Escort Slots (-2 Strat, -4 Cap, -2 Cit, -5 Bas, -4 Log)" },
+        { "label": "Imperial (1 Die)", "cost": 80, "maxDice": 1, "effects": "4 Escort Slots (Moderate Corruption)" },
+        { "label": "Rebuild (100/200) [1 Shipyard Part]", "cost": 20, "maxDice": 99, "effects": "4 Escort Slots (-2 Strat, -4 Cap, -2 Cit, -5 Bas, -4 Log)" }
+      ]
+    },
+    {
+      "id": "crew_imperialis",
+      "title": "Crew the Imperialis",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "desc": "Find manpower to crew the mothballed Executor-class SSD Imperialis found in the Viltitus system.",
+      "options": [
+        { "label": "Standard (0/100)", "cost": 5, "maxDice": 99, "effects": "Operational Executor SSD (-28 Citizens)" }
+      ]
+    },
+    {
+      "id": "isd3_dev",
+      "title": "ISD-III Development",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "desc": "Develop a next-generation Imperial Star Destroyer for the Imperial Regency.",
+      "options": [
+        { "label": "Standard (0/300)", "cost": 15, "maxDice": 99, "effects": "Unlocks ISD-III Blueprint" }
+      ]
+    },
+    {
+      "id": "shielded_interceptor",
+      "title": "Shielded TIE Interceptor Development",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starfighter"],
+      "desc": "Add deflector shields to TIE Interceptors to match New Republic fighters.",
+      "options": [
+        { "label": "Standard (0/200)", "cost": 15, "maxDice": 99, "effects": "Unlocks Shielded TIE Interceptor" }
+      ]
+    },
+    {
+      "id": "tie_facility_mod",
+      "title": "TIE Construction Facility Modification (Stage 1 of 2)",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starfighter"],
+      "desc": "Modify your two Zero Command TIE stations (10 sqds/week) to produce advanced TIE models.",
+      "options": [
+        { "label": "TIE Interceptor (0/200)", "cost": 15, "maxDice": 99, "effects": "Converts station to TIE Interceptor production" },
+        { "label": "TIE Bomber (0/200)", "cost": 15, "maxDice": 99, "effects": "Converts station to TIE Bomber production" }
+      ]
+    },
+    {
+      "id": "repair_queue",
+      "title": "Repair Queue",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "requiresYardWarning": "Requires Completed Shipyard (Currently 0/0 Yards Available)",
+      "desc": "Repair battle-damaged Death Squadron vessels once appropriate shipyards are built.",
+      "options": [
+        { "label": "Razor's Kiss (0/300) [1 Supercapital Yard/die]", "cost": 10, "maxDice": 99, "effects": "Repairs Razor's Kiss SSD" },
+        { "label": "Guardian (0/300) [1 Supercapital Yard/die]", "cost": 10, "maxDice": 99, "effects": "Repairs Guardian SSD" },
+        { "label": "ISDs (0/200, 20 Phases) [1 Capital Yard/die]", "cost": 10, "maxDice": 99, "effects": "Repairs damaged ISDs" },
+        { "label": "Cruisers (0/100, 27 Phases) [1 Cruiser Yard/die]", "cost": 10, "maxDice": 99, "effects": "Repairs damaged Cruisers" },
+        { "label": "Escorts (0/100, 30 Phases) [1 Escort Yard/die]", "cost": 10, "maxDice": 99, "effects": "Repairs damaged Escorts" }
+      ]
+    },
+    {
+      "id": "finishing_hulls",
+      "title": "Finishing Partially-Built Hulls",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "tags": ["starship"],
+      "requiresYardWarning": "Requires Completed Shipyard (Currently 0/0 Yards Available)",
+      "desc": "Complete partially-built hulls in your fleet once matching shipyards are operational.",
+      "options": [
+        { "label": "Eclipse-class SSD (5,000 R, 3 Turns) [1 Supercapital Yard]", "cost": 5000, "maxDice": 1, "effects": "Completes Eclipse SSD" },
+        { "label": "ISD-II (11 Hulls) (375 R, 3 Turns) [1 Capital Yard]", "cost": 375, "maxDice": 1, "effects": "Completes 1 ISD-II" },
+        { "label": "ISD-I (11 Hulls) (375 R, 3 Turns) [1 Capital Yard]", "cost": 375, "maxDice": 1, "effects": "Completes 1 ISD-I" },
+        { "label": "Victory I-class SD (8 Hulls) (142 R, 2 Turns) [1 Cruiser Yard]", "cost": 142, "maxDice": 1, "effects": "Completes 1 Victory-I" },
+        { "label": "Victory II-class SD (8 Hulls) (125 R, 2 Turns) [1 Cruiser Yard]", "cost": 125, "maxDice": 1, "effects": "Completes 1 Victory-II" },
+        { "label": "Vindicator Heavy Cruiser (12 Hulls) (100 R, 1 Turn) [1 Cruiser Yard]", "cost": 100, "maxDice": 1, "effects": "Completes 1 Vindicator" },
+        { "label": "Immobiliser Heavy Cruiser (12 Hulls) (130 R, 1 Turn) [1 Cruiser Yard]", "cost": 130, "maxDice": 1, "effects": "Completes 1 Immobiliser" },
+        { "label": "Gladiator SD (2 Hulls) (85 R, 1 Turn) [1 Cruiser Yard]", "cost": 85, "maxDice": 1, "effects": "Completes 1 Gladiator" },
+        { "label": "Broadside Cruiser (2 Hulls) (85 R, 1 Turn) [1 Cruiser Yard]", "cost": 85, "maxDice": 1, "effects": "Completes 1 Broadside" },
+        { "label": "Carrack Light Cruiser Sqdn (2 Sqdns) (60 R, 1 Turn) [1 Escort Yard]", "cost": 60, "maxDice": 1, "effects": "Completes 1 Carrack Sqdn" },
+        { "label": "Arquitens Command Cruiser Sqdn (2 Sqdns) (50 R, 1 Turn) [1 Escort Yard]", "cost": 50, "maxDice": 1, "effects": "Completes 1 Arquitens Command Sqdn" },
+        { "label": "Arquitens Light Cruiser Sqdn (2 Sqdns) (40 R, 1 Turn) [1 Escort Yard]", "cost": 40, "maxDice": 1, "effects": "Completes 1 Arquitens Light Sqdn" },
+        { "label": "Lancer Frigate Sqdn (2 Sqdns) (47 R, 1 Turn) [1 Escort Yard]", "cost": 47, "maxDice": 1, "effects": "Completes 1 Lancer Sqdn" },
+        { "label": "Tartan Patrol Cruiser Sqdn (3 Sqdns) (42 R, 1 Turn) [1 Escort Yard]", "cost": 42, "maxDice": 1, "effects": "Completes 1 Tartan Sqdn" },
+        { "label": "Raider Corvette Sqdn (3 Sqdns) (18 R, 1 Turn) [1 Escort Yard]", "cost": 18, "maxDice": 1, "effects": "Completes 1 Raider Sqdn" }
+      ]
+    },
+    {
+      "id": "construction_queue",
+      "title": "Construction Queue (Direct Order)",
+      "category": "Military",
+      "subCategory": "Imperial Navy",
+      "isDirectOrder": true,
+      "unitName": "10 TIE Fighter Squadrons",
+      "unitCost": 36,
+      "maxQty": 8,
+      "desc": "Order construction of new starfighter squadrons directly using Resources (Does not require dice; up to 8 orders per turn)."
+    }
+  ],
+  "missions": [
+    {
+      "id": "gran_run",
+      "title": "Great Gran Run Offensive",
+      "faction": "Iron Empire",
+      "duration": "Until Conclusion",
+      "minCap": 20,
+      "desc": "Grand Moff Adelhard wishes our aid in his conquest of the Great Gran Run to seize the shipyards at Oriolanis.",
+      "reward": "100 Resources, 10 TIE Fighter Squadrons, 1 Stormtrooper Legion"
+    },
+    {
+      "id": "nr_raid_shadow",
+      "title": "New Republic Raiding (Shadow Empire)",
+      "faction": "Shadow Empire",
+      "duration": "2 Turns",
+      "minCap": 20,
+      "desc": "Grand Admiral Gallius Rax would like us to raid New Republic garrisons along his border.",
+      "reward": "50 Resources, 3 Stockpiled Health, 10 Stockpiled Food"
+    },
+    {
+      "id": "nr_raid_zero",
+      "title": "New Republic Raiding (Zero Command)",
+      "faction": "Zero Command",
+      "duration": "2 Turns",
+      "minCap": 20,
+      "desc": "Grand Vizier Mas Amedda would like us to raid New Republic garrisons along his border.",
+      "reward": "50 Resources, 1 Capital Goods, 1 Basing"
+    },
+    {
+      "id": "core_garrison",
+      "title": "Core Border Garrisons",
+      "faction": "Azure Imperium",
+      "duration": "3 Turns",
+      "minCap": 20,
+      "desc": "Grand Admiral Osted Wermis would like us to help garrison his Core borders with the New Republic.",
+      "reward": "100 Resources, 1 Strategic Goods"
+    },
+    {
+      "id": "inner_rim_garrison",
+      "title": "Inner Rim Border Garrisons",
+      "faction": "Azure Imperium",
+      "duration": "3 Turns",
+      "minCap": 20,
+      "desc": "Grand Admiral Osted Wermis would like us to help garrison his Inner Rim borders with the New Republic.",
+      "reward": "100 Resources, 1 Strategic Goods"
+    }
+  ],
+  "ships": [
+    { "id": "isd1", "name": "ISD-I", "classType": "ISD", "costR": 4, "max": 18 },
+    { "id": "isd2", "name": "ISD-II", "classType": "ISD", "costR": 4, "max": 10 },
+    { "id": "tector", "name": "Tector-class Star Destroyer", "classType": "ISD", "costR": 4, "max": 2 },
+    { "id": "interdictor", "name": "Interdictor-class Star Destroyer", "classType": "ISD", "costR": 4, "max": 2 },
+    { "id": "venator", "name": "Venator-class Star Destroyer", "classType": "Cruiser", "costR": 2, "max": 4 },
+    { "id": "vic1", "name": "Victory I-class Star Destroyer", "classType": "Cruiser", "costR": 2, "max": 11 },
+    { "id": "vic2", "name": "Victory II-class Star Destroyer", "classType": "Cruiser", "costR": 2, "max": 7 },
+    { "id": "immobiliser", "name": "Immobiliser-class Heavy Cruiser", "classType": "Cruiser", "costR": 2, "max": 2 },
+    { "id": "gladiator", "name": "Gladiator-class Star Destroyer", "classType": "Cruiser", "costR": 2, "max": 12 },
+    { "id": "broadside", "name": "Broadside-class Cruiser", "classType": "Cruiser", "costR": 2, "max": 3 },
+    { "id": "vindicator", "name": "Vindicator-class Heavy Cruiser", "classType": "Cruiser", "costR": 2, "max": 12 },
+    { "id": "dreadnought", "name": "Dreadnought-class Heavy Cruiser", "classType": "Cruiser", "costR": 2, "max": 8 },
+    { "id": "carrack", "name": "Carrack-class Light Cruiser Sqdn", "classType": "Escort", "costR": 1, "max": 10 },
+    { "id": "arq_cmd", "name": "Arquitens-class Command Cruiser Sqdn", "classType": "Escort", "costR": 1, "max": 5 },
+    { "id": "arq_light", "name": "Arquitens-class Light Cruiser Sqdn", "classType": "Escort", "costR": 1, "max": 9 },
+    { "id": "lancer", "name": "Lancer-class Frigate Sqdn", "classType": "Escort", "costR": 1, "max": 18 },
+    { "id": "ton_falk", "name": "Ton-Falk-class Escort Carrier Sqdn", "classType": "Escort", "costR": 1, "max": 6 },
+    { "id": "tartan", "name": "Tartan-class Patrol Cruiser Sqdn", "classType": "Escort", "costR": 1, "max": 12 },
+    { "id": "raider", "name": "Raider-class Corvette Sqdn", "classType": "Escort", "costR": 1, "max": 20 }
+  ]
+}

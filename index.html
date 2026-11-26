@@ -125,6 +125,12 @@
     align-items: center;
   }
 
+  .turn-nav-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   button {
     background: var(--bg-card);
     color: var(--text-main);
@@ -137,15 +143,18 @@
     transition: all 0.15s;
   }
 
-  button:hover { background: var(--bg-hover); border-color: #475569; }
+  button:hover:not(:disabled) { background: var(--bg-hover); border-color: #475569; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
   button.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
-  button.primary:hover { background: #2563eb; }
+  button.primary:hover:not(:disabled) { background: #2563eb; }
   button.success { background: rgba(16, 185, 129, 0.18); border-color: rgba(16, 185, 129, 0.5); color: #34d399; }
-  button.success:hover { background: rgba(16, 185, 129, 0.28); }
+  button.success:hover:not(:disabled) { background: rgba(16, 185, 129, 0.28); }
   button.accent { background: rgba(168, 85, 247, 0.18); border-color: rgba(168, 85, 247, 0.5); color: #d8b4fe; }
-  button.accent:hover { background: rgba(168, 85, 247, 0.28); }
+  button.accent:hover:not(:disabled) { background: rgba(168, 85, 247, 0.28); }
+  button.info-btn { background: rgba(6, 182, 212, 0.16); border-color: rgba(6, 182, 212, 0.45); color: #67e8f9; }
+  button.info-btn:hover:not(:disabled) { background: rgba(6, 182, 212, 0.26); }
   button.danger { color: var(--accent-red); border-color: rgba(239,68,68,0.4); }
-  button.danger:hover { background: rgba(239,68,68,0.15); }
+  button.danger:hover:not(:disabled) { background: rgba(239,68,68,0.15); }
   button.add-btn {
     background: rgba(16, 185, 129, 0.14);
     border-color: rgba(16, 185, 129, 0.45);
@@ -154,7 +163,7 @@
     font-size: 0.76rem;
     white-space: nowrap;
   }
-  button.add-btn:hover { background: rgba(16, 185, 129, 0.25); }
+  button.add-btn:hover:not(:disabled) { background: rgba(16, 185, 129, 0.25); }
 
   /* Main Layout */
   .workspace {
@@ -345,6 +354,20 @@
     grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
     gap: 12px;
     align-content: start;
+  }
+
+  .empty-state-box {
+    grid-column: 1 / -1;
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
   }
 
   .project-card {
@@ -763,6 +786,7 @@
   .scope-tabs {
     display: flex;
     gap: 6px;
+    flex-wrap: wrap;
   }
 
   .scope-btn.active {
@@ -949,13 +973,19 @@
 
 <header>
   <div class="title-area">
-    <h1>Imperial Regency <span>Viltitus</span></h1>
+    <h1>Imperial Regency <span id="active-turn-badge">Turn 01</span></h1>
   </div>
   <div class="stats-bar" id="top-stats-bar"></div>
   <div class="actions-bar">
+    <div class="turn-nav-group">
+      <button class="info-btn" id="prev-turn-btn" onclick="stepTurn(-1)">Previous</button>
+      <button class="info-btn" id="next-turn-btn" onclick="stepTurn(1)">Next</button>
+    </div>
+    <button class="success" id="import-json-btn" onclick="triggerJsonFileImport()">Import JSON</button>
+    <input type="file" id="json-file-input" accept=".json,application/json" style="display:none;" onchange="handleJsonFileSelected(event)">
     <button class="accent" onclick="openProbModal()">Prob. Calc</button>
     <button class="success" onclick="openSlotsModal()">Save Slots</button>
-    <button onclick="openJsonModal('plan')">JSON I/O</button>
+    <button onclick="openJsonModal()">Plan JSON</button>
     <button class="danger" onclick="resetAll()">Clear All</button>
     <button class="primary" onclick="openExportModal('standard')">Export Turn (BBCode)</button>
   </div>
@@ -1055,37 +1085,34 @@
   </div>
 </div>
 
-<!-- JSON Import / Export Modal -->
+<!-- Plan-Only JSON Import / Export Modal -->
 <div class="modal-backdrop" id="json-modal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 id="json-modal-title">JSON Import / Export — Plan</h3>
+      <h3 id="json-modal-title">Plan Order JSON Import / Export</h3>
       <button onclick="closeJsonModal()">Close</button>
     </div>
 
     <div class="json-scope-bar">
-      <div class="scope-tabs">
-        <button class="scope-btn active" id="scope-btn-plan" onclick="setJsonScope('plan')">Plan</button>
-        <button class="scope-btn" id="scope-btn-tasks" onclick="setJsonScope('tasks')">Tasks</button>
-        <button class="scope-btn" id="scope-btn-people" onclick="setJsonScope('people')">People</button>
-      </div>
+      <span style="font-size:0.76rem;color:var(--text-muted);">
+        Exports/imports turn plan order only (assignments, parallel tasks, TIE queue, and fleet deployment).
+      </span>
       <div style="display:flex;gap:6px;">
-        <button onclick="exportCurrentJsonScope()">Export JSON</button>
-        <button class="success" onclick="triggerJsonFileImport()">Load .JSON File</button>
-        <input type="file" id="json-file-input" accept=".json,application/json" style="display:none;" onchange="handleJsonFileSelected(event)">
+        <button onclick="exportPlanJson(true)">Export Plan JSON</button>
+        <button class="success" onclick="triggerJsonFileImport()">Import JSON File</button>
       </div>
     </div>
 
-    <textarea id="json-text" placeholder="Paste JSON here or click 'Export JSON' to view current data..."></textarea>
+    <textarea id="json-text" placeholder="Paste plan JSON here or click 'Export Plan JSON' to view current plan order..."></textarea>
 
     <div class="modal-footer">
-      <span id="json-scope-hint" style="font-size:0.76rem;color:var(--text-muted);">
-        Exports/imports turn assignments, parallel tasks, TIE queue, and fleet deployment.
+      <span style="font-size:0.76rem;color:var(--text-muted);">
+        Actions and characters are not exported here.
       </span>
       <div class="modal-footer-group">
         <button onclick="copyJsonText()">Copy JSON</button>
         <button onclick="downloadJsonFile()">Download .JSON</button>
-        <button class="primary" onclick="applyJsonImport()">Apply Import</button>
+        <button class="primary" onclick="applyPlanJsonImport()">Apply Plan Import</button>
       </div>
     </div>
   </div>
@@ -1114,296 +1141,39 @@
 
 <script>
 // ==========================================
-// DATA: EMPIRE BASE STATS
+// DATA CONTAINERS (POPULATED FROM TURN JSON)
 // ==========================================
-const BASE_STATS = {
+let BASE_STATS = {
   resourcesTurn: 0,
-  resourcesReserve: 20325,
-  psCurrent: 95,
+  resourcesReserve: 0,
+  psCurrent: 0,
   psMax: 100,
-  unrest: 4,
+  unrest: 0,
   corruption: 0,
-  basing: -23,
-  citizens: 415,
-  menials: 3,
-  logistics: 33,
-  food: -55,
-  foodStockpile: 330,
-  foodRationing: "Light Rationing",
-  health: -20,
-  healthStockpile: 100,
-  healthRationing: "Rationing",
-  consumerGoods: -38,
-  capitalGoods: 33,
-  strategicGoods: 18,
-  shipyardParts: 57,
-  beskar: 10
+  basing: 0,
+  citizens: 0,
+  menials: 0,
+  logistics: 0,
+  food: 0,
+  foodStockpile: 0,
+  foodRationing: "None",
+  health: 0,
+  healthStockpile: 0,
+  healthRationing: "None",
+  consumerGoods: 0,
+  capitalGoods: 0,
+  strategicGoods: 0,
+  shipyardParts: 0,
+  beskar: 0
 };
 
-// ==========================================
-// DATA: CHARACTERS & ORGANISATIONS
-// ==========================================
-const DEFAULT_CHARACTERS = [
-  {
-    id: "holt",
-    name: "Leona Holt",
-    rankTitle: "Grand Admiral Leona Holt (Tier 3)",
-    deployable: true,
-    faction: "Leona Loyalists",
-    desc: "+3 Free Dice, +5 Bonus to all dice, +10 Military, +5 Intelligence, +20 Imperial Navy projects.",
-    dice: ["Free", "Free", "Free"],
-    getBonus: (proj) => {
-      let b = 5;
-      if (proj.category === "Military") b += 10;
-      if (proj.category === "Intelligence") b += 5;
-      if (proj.subCategory === "Imperial Navy") b += 20;
-      return b;
-    }
-  },
-  {
-    id: "sloane",
-    name: "Rae Sloane",
-    rankTitle: "Admiral Rae Sloane (Tier 2)",
-    deployable: true,
-    faction: "Pragmatic Reformist",
-    desc: "+1 Military Die, +1 Free Die, +15 Bonus to Military, -10 Penalty to Intelligence.",
-    dice: ["Military", "Free"],
-    getBonus: (proj) => {
-      if (proj.category === "Military") return 15;
-      if (proj.category === "Intelligence") return -10;
-      return 0;
-    }
-  },
-  {
-    id: "versio",
-    name: "Garrick Versio",
-    rankTitle: "Admiral Garrick Versio (Tier 1)",
-    deployable: true,
-    faction: "True Believer",
-    desc: "+1 Military Die, +1 Intelligence Die, +11 Bonus to Intelligence, +10 Bonus to Military.",
-    dice: ["Military", "Intelligence"],
-    getBonus: (proj) => {
-      if (proj.category === "Intelligence") return 11;
-      if (proj.category === "Military") return 10;
-      return 0;
-    }
-  },
-  {
-    id: "pellaeon",
-    name: "Gilad Pellaeon",
-    deployable: false,
-    faction: "Dutiful Careerist",
-    desc: "+1 Military Die, +1 Administration Die, +5 Administration, +10 Military, +10 Imperial Navy projects.",
-    dice: ["Military", "Administration"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Administration") b += 5;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Navy") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "rogriss",
-    name: "Teren Rogriss",
-    rankTitle: "Admiral Teren Rogriss (Tier 2)",
-    deployable: true,
-    faction: "Dutiful Careerist",
-    desc: "+1 Military Die, +1 Infrastructure Die, +5 Infrastructure, +10 Military, +10 Imperial Navy projects.",
-    dice: ["Military", "Infrastructure"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Infrastructure") b += 5;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Navy") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "veers",
-    name: "Maximilian Veers",
-    rankTitle: "General Maximilian Veers (Tier 2)",
-    deployable: true,
-    faction: "Dutiful Careerist",
-    desc: "+1 Military Die, +10 Bonus to Military, +10 Bonus to Imperial Army projects.",
-    dice: ["Military"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Army") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "pryde",
-    name: "Enric Pryde",
-    deployable: false,
-    faction: "True Believer",
-    desc: "+1 Military Die, +10 Bonus to Military, +10 Bonus to Imperial Navy projects.",
-    dice: ["Military"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Navy") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "hata",
-    name: "Mari Hata",
-    deployable: false,
-    faction: "True Believer",
-    desc: "+1 Free Die, +10 Bonus to Intelligence and Administration.",
-    dice: ["Free"],
-    getBonus: (proj) => {
-      if (proj.category === "Intelligence" || proj.category === "Administration") return 10;
-      return 0;
-    }
-  },
-  {
-    id: "jade",
-    name: "Mara Jade",
-    deployable: false,
-    faction: "Pragmatic Reformers",
-    desc: "+1 Free Die, +11 Bonus to Intelligence and Military.",
-    dice: ["Free"],
-    getBonus: (proj) => {
-      if (proj.category === "Intelligence" || proj.category === "Military") return 11;
-      return 0;
-    }
-  },
-  {
-    id: "gideon",
-    name: "Gideon",
-    rankTitle: "Moff Gideon (Tier 1)",
-    deployable: true,
-    faction: "True Believer",
-    desc: "+1 Industry Die, +1 Services Die, +10 Bonus to Industry, +10 Bonus to Services.",
-    dice: ["Industry", "Services"],
-    getBonus: (proj) => {
-      if (proj.category === "Industry") return 10;
-      if (proj.category === "Services") return 10;
-      return 0;
-    }
-  },
-  {
-    id: "fel",
-    name: "Soontir Fel (& Maarek Stele)",
-    rankTitle: "Colonel Soontir Fel (Tier 1)",
-    deployable: true,
-    faction: "Pragmatic Reformist",
-    desc: "+2 Free Dice, +10 Bonus to Military Dice.",
-    dice: ["Free", "Free"],
-    getBonus: (proj) => (proj.category === "Military" ? 10 : 0)
-  },
-  {
-    id: "wessex",
-    name: "Lira Wessex",
-    deployable: false,
-    faction: "Dutiful Careerist",
-    desc: "+1 Military Die, +1 Industry Die, +10 Industry, -20 Military, +40 starship-related projects.",
-    dice: ["Military", "Industry"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Industry") b += 10;
-      if (proj.category === "Military") b -= 20;
-      if (proj.tags && proj.tags.includes("starship")) b += 40;
-      return b;
-    }
-  },
-  {
-    id: "elsbeth",
-    name: "Morgan Elsbeth",
-    deployable: false,
-    faction: "Sith Cultist",
-    desc: "+1 Military Die, +1 Industry Die, +11 Industry, -20 Military, +40 starfighter-related projects.",
-    dice: ["Military", "Industry"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Industry") b += 11;
-      if (proj.category === "Military") b -= 20;
-      if (proj.tags && proj.tags.includes("starfighter")) b += 40;
-      return b;
-    }
-  },
-  {
-    id: "gaarn",
-    name: "Roderick Gaarn",
-    rankTitle: "Admiral Roderick Gaarn (Tier 1)",
-    deployable: true,
-    faction: "Leona Loyalists",
-    desc: "+1 Intelligence Die, +1 Military Die, +5 Intelligence, +10 Military, +10 Imperial Navy projects.",
-    dice: ["Intelligence", "Military"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Intelligence") b += 5;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Navy") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "niovi",
-    name: "Gastos Niovi",
-    rankTitle: "General Gastos Niovi (Tier 1)",
-    deployable: true,
-    faction: "Leona Loyalists",
-    desc: "+1 Services Die, +1 Military Die, +5 Services, +10 Military, +10 Imperial Army projects.",
-    dice: ["Services", "Military"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Services") b += 5;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Army") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "oxtroe",
-    name: "Betl Oxtroe",
-    rankTitle: "Admiral Betl Oxtroe (Tier 1)",
-    deployable: true,
-    faction: "Pragmatic Reformist",
-    desc: "+1 Administration Die, +1 Military Die, +5 Administration, +10 Military, +10 Imperial Navy projects.",
-    dice: ["Administration", "Military"],
-    getBonus: (proj) => {
-      let b = 0;
-      if (proj.category === "Administration") b += 5;
-      if (proj.category === "Military") b += 10;
-      if (proj.subCategory === "Imperial Navy") b += 10;
-      return b;
-    }
-  },
-  {
-    id: "kdy",
-    name: "Kuat Drive Yards",
-    deployable: false,
-    faction: "Dutiful Careerist",
-    desc: "+1 Industry Die, +1 Infrastructure Die, +10 Industry, +10 Infrastructure.",
-    dice: ["Industry", "Infrastructure"],
-    getBonus: (proj) => {
-      if (proj.category === "Industry") return 10;
-      if (proj.category === "Infrastructure") return 10;
-      return 0;
-    }
-  },
-  {
-    id: "kuati",
-    name: "Kuati Diaspora",
-    deployable: false,
-    faction: "Leona Loyalists",
-    desc: "+1 Administration Die, +1 Infrastructure Die, +10 Administration, +10 Infrastructure.",
-    dice: ["Administration", "Infrastructure"],
-    getBonus: (proj) => {
-      if (proj.category === "Administration") return 10;
-      if (proj.category === "Infrastructure") return 10;
-      return 0;
-    }
-  }
-];
+let CHARACTERS = [];
+let PROJECTS = [];
+let MISSIONS = [];
+let AVAILABLE_SHIPS = [];
 
 function evaluateBonusRules(rules, proj) {
-  if (!Array.isArray(rules)) return 0;
+  if (!Array.isArray(rules) || !proj) return 0;
   let total = 0;
   for (const r of rules) {
     if (!r || typeof r.value !== "number") continue;
@@ -1419,747 +1189,14 @@ function evaluateBonusRules(rules, proj) {
 }
 
 function attachBonusHelper(person) {
-  if (typeof person.getBonus === "function") return person;
+  if (!person || typeof person !== "object") return person;
   return {
     ...person,
+    dice: Array.isArray(person.dice) ? [...person.dice] : [],
+    bonusRules: Array.isArray(person.bonusRules) ? person.bonusRules.map(r => ({ ...r })) : [],
     getBonus: (proj) => evaluateBonusRules(person.bonusRules, proj)
   };
 }
-
-let CHARACTERS = DEFAULT_CHARACTERS.map(attachBonusHelper);
-
-// ==========================================
-// DATA: PROJECTS & OPTIONS
-// ==========================================
-const DEFAULT_PROJECTS = [
-  // INFRASTRUCTURE
-  {
-    id: "coromul_col",
-    title: "Coromul Colonisation (Phase 1)",
-    category: "Infrastructure",
-    desc: "Turn subterranean caverns of Coromul into new housing and basing.",
-    options: [
-      { label: "Standard (0/75)", cost: 5, maxDice: 99, effects: "+5 Basing, -1 Logistics" },
-      { label: "Imperial (1 Die)", cost: 7, maxDice: 1, effects: "+5 Basing, -1 Logistics, Small Corruption" }
-    ]
-  },
-  {
-    id: "space_facility",
-    title: "Space Facility Construction (Phase 1)",
-    category: "Infrastructure",
-    desc: "Constructing space stations in orbit is less resource-heavy than on Ilum or Mechdol.",
-    options: [
-      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+5 Basing, -1 Logistics" },
-      { label: "Imperial (1 Die)", cost: 30, maxDice: 1, effects: "+5 Basing, -1 Logistics, Small Corruption" }
-    ]
-  },
-  {
-    id: "viltitus_palace",
-    title: "Viltitus Imperial Palace (Stage 1 of 3)",
-    category: "Infrastructure",
-    desc: "Build a palace worthy of the new capital of the Imperial Regency.",
-    options: [
-      { label: "Stage 1 (0/150)", cost: 15, maxDice: 99, effects: "+5 Basing, +2 Consumer Goods, -1 Cap Goods, -1 Logistics" },
-      { label: "Stage 2 (0/300)", cost: 15, maxDice: 99, effects: "+10 Basing, +5 Consumer Goods, -1 Menials, -3 Cap Goods, -2 Logistics" },
-      { label: "Stage 3 (0/450)", cost: 15, maxDice: 99, effects: "+15 Basing, +10 Consumer Goods, +4 Health, -1 Citizens, -3 Menials, -1 Strat, -3 Cap, -3 Log" }
-    ]
-  },
-  {
-    id: "viltitus_farmland",
-    title: "Develop Viltitus Farmland (Phase 1)",
-    category: "Infrastructure",
-    desc: "Clear lethal jungle on Viltitus to grow imported crops in its fertile soil.",
-    options: [
-      { label: "Standard (0/100)", cost: 5, maxDice: 99, effects: "-1 Menials, +5 Food, +1 Consumer Goods" },
-      { label: "Imperial (1 Die)", cost: 10, maxDice: 1, effects: "-1 Menials, +5 Food, +1 Consumer Goods, Small Corruption" }
-    ]
-  },
-  {
-    id: "agri_facilities",
-    title: "Develop Agricultural Facilities (Phase 1)",
-    category: "Infrastructure",
-    desc: "Construct environmentally sealed greenhouses on other worlds and space stations.",
-    options: [
-      { label: "Standard (0/200)", cost: 10, maxDice: 99, effects: "+7 Food, +2 Consumer Goods, -1 Cap, -1 Cit, -1 Log, -1 Basing" },
-      { label: "Imperial (1 Die)", cost: 40, maxDice: 1, effects: "+7 Food, +2 Consumer Goods, -1 Cap, -1 Cit, -1 Log, -1 Basing, Small Corruption" }
-    ]
-  },
-  {
-    id: "water_purification",
-    title: "Water Purification Plants (Stage 1 of 4)",
-    category: "Infrastructure",
-    desc: "Treat toxic planetary water to improve public health.",
-    options: [
-      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "+5 Health, -1 Cap Goods, -1 Menials, -1 Logistics, -3 Basing" }
-    ]
-  },
-  {
-    id: "surface_spaceports",
-    title: "Surface Spaceports (Phase 1)",
-    category: "Infrastructure",
-    desc: "Basic landing bays and hangars in safe zones to ease orbit-to-surface cargo.",
-    options: [
-      { label: "Standard (0/150)", cost: 15, maxDice: 99, effects: "+3 Logistics" }
-    ]
-  },
-  {
-    id: "capital_spaceports",
-    title: "Capital Spaceports (Stage 1 of 4)",
-    category: "Infrastructure",
-    desc: "Proper spaceport for capital-grade starships.",
-    options: [
-      { label: "Standard (0/300)", cost: 20, maxDice: 99, effects: "+12 Logistics, -1 Cap Goods, -1 Citizens, -2 Basing" }
-    ]
-  },
-  {
-    id: "imperial_monuments",
-    title: "Imperial Monuments (Stage 1 of 4)",
-    category: "Infrastructure",
-    desc: "Construct statues and signs of the New Order's superiority.",
-    options: [
-      { label: "Standard (0/100)", cost: 5, maxDice: 99, effects: "+3 PS, -1 Basing" },
-      { label: "Imperial (1 Die)", cost: 10, maxDice: 1, effects: "+4 PS, -1 Basing, Small Corruption" }
-    ]
-  },
-  {
-    id: "luxury_quarters",
-    title: "Luxury Quarters",
-    category: "Infrastructure",
-    desc: "Residences befitting Imperial officers and officials.",
-    options: [
-      { label: "Standard (0/200)", cost: 20, maxDice: 99, effects: "+5 PS, +5 Consumer Goods, -3 Basing" },
-      { label: "Imperial (1 Die)", cost: 80, maxDice: 1, effects: "+6 PS, +5 Consumer Goods, -3 Basing, Small Corruption" }
-    ]
-  },
-  {
-    id: "trantor_depot",
-    title: "Use Trantor-class Supertanker Fuel Depot",
-    category: "Infrastructure",
-    desc: "Massive ISD-sized station provided by Pentastar Alignment. Use for housing OR supplies.",
-    options: [
-      { label: "Standard: Housing (0/50)", cost: 10, maxDice: 99, effects: "+20 Basing" },
-      { label: "Imperial: Housing (1 Die)", cost: 10, maxDice: 1, effects: "+20 Basing, Small Corruption" },
-      { label: "Standard: Supplies (0/50)", cost: 5, maxDice: 99, effects: "+20 Logistics" },
-      { label: "Imperial: Supplies (1 Die)", cost: 5, maxDice: 1, effects: "+20 Logistics, Small Corruption" }
-    ]
-  },
-
-  // INDUSTRY
-  {
-    id: "civ_shipyards",
-    title: "Build Civilian Shipyards (Phase 1)",
-    category: "Industry",
-    tags: ["starship"],
-    desc: "Build freighters, passenger ships, and civilian vessels.",
-    options: [
-      { label: "Standard (0/200)", cost: 20, maxDice: 99, effects: "+12 Logistics, -1 Strat, -3 Cap, -3 Cit, -3 Basing" },
-      { label: "Imperial (1 Die)", cost: 80, maxDice: 1, effects: "+12 Logistics, -1 Strat, -3 Cap, -3 Cit, -3 Basing, Small Corruption" },
-      { label: "Rebuild (100/200) [1 Shipyard Part]", cost: 20, maxDice: 99, effects: "+12 Logistics, -1 Cap, -3 Cit, -3 Basing" }
-    ]
-  },
-  {
-    id: "surface_prospecting",
-    title: "Perform Surface Prospecting",
-    category: "Industry",
-    desc: "Survey planetary surfaces for valuable resource deposits.",
-    options: [
-      { label: "Coromul (0/100)", cost: 5, maxDice: 99, effects: "Discover Coromul surface deposits" },
-      { label: "Ilum (0/100)", cost: 5, maxDice: 99, effects: "Discover Ilum surface deposits" },
-      { label: "Mechdol (0/100)", cost: 5, maxDice: 99, effects: "Discover Mechdol surface deposits" },
-      { label: "Viltitus (0/100)", cost: 5, maxDice: 99, effects: "Discover Viltitus surface deposits" }
-    ]
-  },
-  {
-    id: "space_prospecting",
-    title: "Perform Space Prospecting",
-    category: "Industry",
-    desc: "Survey star systems for valuable space resource deposits.",
-    options: [
-      { label: "Coromul System (0/100)", cost: 5, maxDice: 99, effects: "Discover Coromul space deposits" },
-      { label: "Ilum System (0/100)", cost: 5, maxDice: 99, effects: "Discover Ilum space deposits" },
-      { label: "Mechdol System (0/100)", cost: 5, maxDice: 99, effects: "Discover Mechdol space deposits" },
-      { label: "Viltitus System (0/100)", cost: 5, maxDice: 99, effects: "Discover Viltitus space deposits" }
-    ]
-  },
-  {
-    id: "class5_droids",
-    title: "Class 5 Droid Factory",
-    category: "Industry",
-    desc: "Produce simple labour droids for dangerous/undesirable jobs.",
-    options: [
-      { label: "Standard (0/250)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +2 Cap Goods, +12 Menials, -1 Cit, -3 Basing" },
-      { label: "Imperial (1 Die)", cost: 100, maxDice: 1, effects: "+10 R/Turn, +2 Cap Goods, +12 Menials, -1 Cit, -3 Basing, Mod. Corruption" }
-    ]
-  },
-  {
-    id: "class2_droids",
-    title: "Class 2 Droid Factory",
-    category: "Industry",
-    desc: "Produce specialised engineering and tactical droids.",
-    options: [
-      { label: "Standard (0/250)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +10 Cap Goods, +4 Menials, -1 Cit, -3 Basing" },
-      { label: "Imperial (1 Die)", cost: 100, maxDice: 1, effects: "+10 R/Turn, +10 Cap Goods, +4 Menials, -1 Cit, -3 Basing, Mod. Corruption" }
-    ]
-  },
-  {
-    id: "medical_droids",
-    title: "Medical Droid Factory",
-    category: "Industry",
-    desc: "Produce auxiliary medical droids to assist human staff.",
-    options: [
-      { label: "Standard (0/250)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +4 Health, -1 Cap Goods, -1 Cit, -2 Basing" },
-      { label: "Imperial (1 Die)", cost: 100, maxDice: 1, effects: "+10 R/Turn, +4 Health, -1 Cap Goods, -1 Cit, -2 Basing, Mod. Corruption" }
-    ]
-  },
-  {
-    id: "durasteel_foundries",
-    title: "Durasteel Foundries (Stage 1 of 5)",
-    category: "Industry",
-    desc: "Massive industrial forges vital to Regency production.",
-    options: [
-      { label: "Standard: Stage 1 (0/100)", cost: 20, maxDice: 99, effects: "+10 R/Turn, +1 Strat Goods, +2 Cap Goods, -2 Cit, -1 Basing" },
-      { label: "Imperial: Stage 1 (1 Die)", cost: 40, maxDice: 1, effects: "+10 R/Turn, +1 Strat Goods, +2 Cap Goods, -2 Cit, -1 Basing, Small Corruption" }
-    ]
-  },
-  {
-    id: "commercial_plants",
-    title: "Commercial Production Plants (Phase 1)",
-    category: "Industry",
-    desc: "Produce civilian consumer goods to ease severe shortages.",
-    options: [
-      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "+4 Consumer Goods, -1 Cap Goods, -1 Cit, -1 Basing" },
-      { label: "Imperial (1 Die)", cost: 20, maxDice: 1, effects: "+4 Consumer Goods, -1 Cap Goods, -1 Cit, -1 Basing, Small Corruption" }
-    ]
-  },
-
-  // INTELLIGENCE
-  {
-    id: "compnor_office",
-    title: "Set up COMPNOR Office",
-    category: "Intelligence",
-    desc: "Propaganda branch to steer public discourse.",
-    options: [
-      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+5 PS" }
-    ]
-  },
-  {
-    id: "isb_office",
-    title: "Set up ISB Office",
-    category: "Intelligence",
-    desc: "Internal security bureau to ensure loyalty and root out spies.",
-    options: [
-      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+3 PS" }
-    ]
-  },
-  {
-    id: "iis_office",
-    title: "Insert IIS Office",
-    category: "Intelligence",
-    desc: "Imperial Intelligence Service to track external enemies and warlords.",
-    options: [
-      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+3 PS" }
-    ]
-  },
-  {
-    id: "infiltration",
-    title: "Infiltration (Stage 1 of 5)",
-    category: "Intelligence",
-    desc: "Covertly infiltrate rival factions (Using >1 die on a single target heightens detection risk).",
-    options: [
-      "True Empire", "Corellian Empire", "Azure Imperium", "Zero Command", "Shadow Empire",
-      "Iron Empire", "Rothana Authority", "Eriadu Authority", "Pentastar Alignment",
-      "Lankin's Kingdom", "Greater Maldrood", "Zsinj's Empire", "Ciutric Hegemony",
-      "Imperial Insurgency", "New Republic", "Corporate Sector", "Megacorps",
-      "Hutts", "Black Sun", "Pyke Syndicate", "Hapes Consortium"
-    ].map(f => ({ label: `${f} (Stage 1) (0/100)`, cost: 10, maxDice: 99, effects: `Infiltrate ${f}` }))
-  },
-  {
-    id: "security_reviews",
-    title: "Security Reviews",
-    category: "Intelligence",
-    desc: "Ensure no leaks or spies compromise Project First Order.",
-    options: [
-      { label: "Standard (1 Die) (DC 60)", cost: 20, maxDice: 1, effects: "Counter-espionage check (DC 60)" }
-    ]
-  },
-
-  // SERVICES
-  {
-    id: "basic_medical",
-    title: "Basic Medical Facilities",
-    category: "Services",
-    desc: "Local treatment of illnesses and injuries for a healthier workforce.",
-    options: [
-      { label: "Standard (0/200)", cost: 15, maxDice: 99, effects: "+6 Health, -1 Cap Goods, -1 Cit, -1 Basing" },
-      { label: "Imperial (1 Die)", cost: 60, maxDice: 1, effects: "+6 Health, -1 Cap Goods, -1 Cit, -1 Basing, Small Corruption" }
-    ]
-  },
-  {
-    id: "food_rationing",
-    title: "Introduce Food Rationing",
-    category: "Services",
-    desc: "Increase rationing severity to save food at the cost of health and support.",
-    options: [
-      { label: "Moderate (1 Die)", cost: 0, maxDice: 1, effects: "+15 Food, -2 Health, -5 PS" },
-      { label: "Harsh (1 Die)", cost: 0, maxDice: 1, effects: "+30 Food, -5 Health, -10 PS" }
-    ]
-  },
-  {
-    id: "remove_rationing",
-    title: "Remove Rationing",
-    category: "Services",
-    desc: "Lift unpopular rationing policies to boost morale and quality of life.",
-    options: [
-      { label: "Remove Light Food Rationing (1 Die)", cost: 0, maxDice: 1, effects: "-15 Food, Improves Image/QoL" },
-      { label: "Remove Medical Rationing (1 Die)", cost: 0, maxDice: 1, effects: "-20 Health, Improves Image/QoL" }
-    ]
-  },
-  {
-    id: "childcare_program",
-    title: "Childcare Program",
-    category: "Services",
-    desc: "Free up parents in the expedition to take on productive jobs.",
-    options: [
-      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "+2 Citizens, -1 PS" },
-      { label: "Imperial (1 Die)", cost: 20, maxDice: 1, effects: "+2 Citizens, -1 PS, Small Corruption" }
-    ]
-  },
-  {
-    id: "tech_education",
-    title: "Technical Education Programs",
-    category: "Services",
-    desc: "Teach workers better equipment maintenance to free up hardware.",
-    options: [
-      { label: "Standard (0/150)", cost: 10, maxDice: 99, effects: "+1 Capital Goods" },
-      { label: "Imperial (1 Die)", cost: 30, maxDice: 1, effects: "+1 Capital Goods, Small Corruption" }
-    ]
-  },
-  {
-    id: "luxury_venues",
-    title: "Luxury Venues",
-    category: "Services",
-    desc: "Establishments suitable for Imperial elites to appease their station.",
-    options: [
-      { label: "Standard (0/150)", cost: 15, maxDice: 99, effects: "+5 PS, +2 Consumer Goods, -4 Food, -2 Basing" },
-      { label: "Imperial (1 Die)", cost: 45, maxDice: 1, effects: "+6 PS, +2 Consumer Goods, -4 Food, -2 Basing, Small Corruption" }
-    ]
-  },
-
-  // ADMINISTRATION
-  {
-    id: "hyperlane_beacons",
-    title: "Set-Up Hyperlane Route Beacons",
-    category: "Administration",
-    desc: "Set up beacons along hyperlanes for easier fleet access to and from the known galaxy.",
-    options: [
-      { label: "Bastion: Pentastar Alignment (0/200)", cost: 15, maxDice: 99, effects: "Hyperlane connection to Pentastar Alignment" },
-      { label: "Rago: Shadow Empire (0/200)", cost: 15, maxDice: 99, effects: "Hyperlane connection to Shadow Empire" },
-      { label: "Jakku: Neutral (0/200)", cost: 15, maxDice: 99, effects: "Hyperlane connection to Jakku" }
-    ]
-  },
-  {
-    id: "eclipse_databanks",
-    title: "Eclipse Databanks",
-    category: "Administration",
-    desc: "Decrypt Emperor Palpatine's secret locations, schematics, and vaults aboard the Eclipse.",
-    options: [
-      { label: "Location Aurek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Aurek" },
-      { label: "Location Besh (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Besh" },
-      { label: "Location Cherek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Cherek" },
-      { label: "Location Dorn (0/100)", cost: 15, maxDice: 99, effects: "Unlock Secret Location Dorn" },
-      { label: "TIE Defender schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock TIE Defender schematics", isStarfighter: true },
-      { label: "TIE Advanced schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock TIE Advanced schematics", isStarfighter: true },
-      { label: "TIE Phantom schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock TIE Phantom schematics", isStarfighter: true },
-      { label: "Missile Boat schematics (0/100)", cost: 15, maxDice: 99, effects: "Unlock Missile Boat schematics", isStarfighter: true },
-      { label: "Vault Aurek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Aurek" },
-      { label: "Vault Besh (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Besh" },
-      { label: "Vault Cresh (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Cresh" },
-      { label: "Vault Cherek (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Cherek" },
-      { label: "Vault Dorn (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Dorn" },
-      { label: "Vault Esk (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Esk" },
-      { label: "Vault Enth (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Enth" },
-      { label: "Vault Onith (0/100)", cost: 15, maxDice: 99, effects: "Unlock Emperor's Vault Onith" }
-    ]
-  },
-  {
-    id: "raising_heiress",
-    title: "Raising the Heiress",
-    category: "Administration",
-    desc: "Assign a mentor to raise Ederlathh Pallopides, Palpatine's great-niece and nominal Regency leader.",
-    options: [
-      { label: "Assign Mentor (1 Die)", cost: 0, maxDice: 1, effects: "Shapes the future Empress" }
-    ]
-  },
-  {
-    id: "political_payments",
-    title: "Political Payments",
-    category: "Administration",
-    desc: "Reward loyalty with large credit bonuses to shore up political support.",
-    options: [
-      { label: "Standard (1 Die)", cost: 100, maxDice: 1, effects: "+5 PS, Large rise in Corruption" }
-    ]
-  },
-  {
-    id: "fight_corruption",
-    title: "Fight Corruption",
-    category: "Administration",
-    desc: "Enforce Imperial law and regulations to purge corruption (Costs 3 PS per Die).",
-    options: [
-      { label: "Standard (DC 100) [3 PS/Die]", cost: 0, psCost: 3, maxDice: 99, effects: "Large reduction in Corruption (-3 PS/Die)" }
-    ]
-  },
-
-  // MILITARY (GENERAL)
-  {
-    id: "turbolaser_net",
-    title: "Turbolaser Ground Network (Phase 1)",
-    category: "Military",
-    desc: "Planetary defence batteries around key sites on Viltitus.",
-    options: [
-      { label: "Standard (0/100)", cost: 20, maxDice: 99, effects: "-1 Capital Goods, Ground/Atmo Defense" },
-      { label: "Imperial (1 Die)", cost: 40, maxDice: 1, effects: "-1 Capital Goods, Small Corruption" }
-    ]
-  },
-  {
-    id: "orbital_defences",
-    title: "Orbital Defences (Phase 1)",
-    category: "Military",
-    desc: "Armed orbital defence stations around Viltitus.",
-    options: [
-      { label: "Standard (0/150)", cost: 20, maxDice: 99, effects: "-1 Capital Goods, Orbital Garrison" },
-      { label: "Imperial (1 Die)", cost: 60, maxDice: 1, effects: "-1 Capital Goods, Small Corruption" }
-    ]
-  },
-  {
-    id: "primary_space_station",
-    title: "Space Station (Stage 1 of 5)",
-    category: "Military",
-    desc: "Primary defensive command station above Viltitus.",
-    options: [
-      { label: "Standard: Stage 1 (0/100)", cost: 20, maxDice: 99, effects: "-1 Cap Goods, -1 Cit, -1 Strat Goods" },
-      { label: "Imperial: Stage 1 (1 Die)", cost: 40, maxDice: 1, effects: "-1 Cap Goods, -1 Cit, -1 Strat Goods, Small Corruption" }
-    ]
-  },
-  {
-    id: "military_academy",
-    title: "Imperial Military Academy of Viltitus",
-    category: "Military",
-    desc: "Train new pilots, troopers, and officers to fill severe shortages.",
-    options: [
-      { label: "TIE Pilot Training (0/300) [Starfighter]", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing", isStarfighter: true },
-      { label: "Stormtrooper Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
-      { label: "Imperial Army Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
-      { label: "Imperial Navy Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" },
-      { label: "Commando Training (0/300)", cost: 20, maxDice: 99, effects: "-2 Cap, -1 Log, -1 Food, -1 Cit, -3 Basing" }
-    ]
-  },
-  {
-    id: "royal_guard_academy",
-    title: "Imperial Royal Guard Academy",
-    category: "Military",
-    desc: "Relocated from Yinchorr; establish pipeline for elite Royal Guards.",
-    options: [
-      { label: "Standard (0/150)", cost: 15, maxDice: 99, effects: "-1 Capital Goods, -1 Basing" }
-    ]
-  },
-  {
-    id: "dark_trooper_project",
-    title: "Dark Trooper Project",
-    category: "Military",
-    desc: "Set up Moff Gideon's Dark Trooper facilities on Viltitus.",
-    options: [
-      { label: "Standard (0/100)", cost: 20, maxDice: 99, effects: "-1 Capital Goods, -1 Basing" }
-    ]
-  },
-  {
-    id: "patrol_unknown",
-    title: "Patrol the Unknown Regions",
-    category: "Military",
-    desc: "Active patrols to map hazards and avoid ambushes.",
-    options: [
-      { label: "Standard (1 Die) (DC 30/50/80/120)", cost: 5, maxDice: 1, effects: "Map Unknown Regions & Threats" }
-    ]
-  },
-
-  // IMPERIAL ARMY
-  {
-    id: "army_review",
-    title: "Army Military Review",
-    category: "Military",
-    subCategory: "Imperial Army",
-    desc: "Review usage of the Imperial Army going forward.",
-    options: [
-      { label: "Standard (1 Die)", cost: 5, maxDice: 1, effects: "Army Doctrine Reform" }
-    ]
-  },
-  {
-    id: "stormtrooper_review",
-    title: "Stormtrooper Military Review",
-    category: "Military",
-    subCategory: "Imperial Army",
-    desc: "Review usage of the Stormtrooper Corps going forward.",
-    options: [
-      { label: "Standard (1 Die)", cost: 5, maxDice: 1, effects: "Stormtrooper Doctrine Reform" }
-    ]
-  },
-  {
-    id: "army_facilities",
-    title: "Imperial Army Training Facilities",
-    category: "Military",
-    subCategory: "Imperial Army",
-    desc: "Ranges and drill grounds for Imperial Army recruits.",
-    options: [
-      { label: "Standard (0/100)", cost: 10, maxDice: 99, effects: "-3 Basing" }
-    ]
-  },
-  {
-    id: "stormtrooper_facilities",
-    title: "Stormtrooper Training Facilities",
-    category: "Military",
-    subCategory: "Imperial Army",
-    desc: "Ranges and drill grounds for Stormtrooper Corps.",
-    options: [
-      { label: "Standard (0/100)", cost: 15, maxDice: 99, effects: "-2 Basing" }
-    ]
-  },
-
-  // IMPERIAL NAVY
-  {
-    id: "navy_review",
-    title: "Navy Military Review",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    desc: "Review usage of the Imperial Navy going forward.",
-    options: [
-      { label: "Standard (1 Die)", cost: 0, maxDice: 1, effects: "Naval Doctrine Reform" }
-    ]
-  },
-  {
-    id: "supercapital_yard",
-    title: "Supercapital Yard",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    desc: "Required to finish the Eclipse SSD and repair Super Star Destroyers.",
-    options: [
-      { label: "Standard (0/1,500)", cost: 20, maxDice: 99, effects: "1 Supercapital Slot (-8 Strat, -20 Cap, -10 Cit, -10 Bas, -8 Log)" },
-      { label: "Imperial (1 Die)", cost: 600, maxDice: 1, effects: "1 Supercapital Slot (Gargantuan Corruption)" },
-      { label: "Rebuild (800/1,500) [8 Shipyard Parts]", cost: 20, maxDice: 99, effects: "1 Supercapital Slot (-4 Cap, -10 Cit, -10 Bas, -8 Log)" }
-    ]
-  },
-  {
-    id: "capital_yard",
-    title: "Capital Yard (Phase 1)",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    desc: "Build or service Star Destroyers and capital ships.",
-    options: [
-      { label: "Standard (0/600)", cost: 20, maxDice: 99, effects: "1 Capital Slot (-5 Strat, -10 Cap, -5 Cit, -5 Bas, -4 Log)" },
-      { label: "Imperial (1 Die)", cost: 240, maxDice: 1, effects: "1 Capital Slot (Massive Corruption)" },
-      { label: "Rebuild (400/600) [4 Shipyard Parts]", cost: 20, maxDice: 99, effects: "1 Capital Slot (-1 Strat, -2 Cap, -5 Cit, -5 Bas, -4 Log)" }
-    ]
-  },
-  {
-    id: "cruiser_yard",
-    title: "Cruiser Yard (Phase 1)",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    desc: "Build or service Victory SDs and Heavy Cruisers.",
-    options: [
-      { label: "Standard (0/300)", cost: 20, maxDice: 99, effects: "1 Cruiser Slot (-3 Strat, -6 Cap, -3 Cit, -5 Bas, -4 Log)" },
-      { label: "Imperial (1 Die)", cost: 120, maxDice: 1, effects: "1 Cruiser Slot (Large Corruption)" },
-      { label: "Rebuild (200/300) [2 Shipyard Parts]", cost: 20, maxDice: 99, effects: "1 Cruiser Slot (-1 Strat, -2 Cap, -3 Cit, -5 Bas, -4 Log)" }
-    ]
-  },
-  {
-    id: "escort_yard",
-    title: "Escort Yard (Phase 1)",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    desc: "Build or service up to four Escort-grade warships.",
-    options: [
-      { label: "Standard (0/200)", cost: 20, maxDice: 99, effects: "4 Escort Slots (-2 Strat, -4 Cap, -2 Cit, -5 Bas, -4 Log)" },
-      { label: "Imperial (1 Die)", cost: 80, maxDice: 1, effects: "4 Escort Slots (Moderate Corruption)" },
-      { label: "Rebuild (100/200) [1 Shipyard Part]", cost: 20, maxDice: 99, effects: "4 Escort Slots (-2 Strat, -4 Cap, -2 Cit, -5 Bas, -4 Log)" }
-    ]
-  },
-  {
-    id: "crew_imperialis",
-    title: "Crew the Imperialis",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    desc: "Find manpower to crew the mothballed Executor-class SSD Imperialis found in the Viltitus system.",
-    options: [
-      { label: "Standard (0/100)", cost: 5, maxDice: 99, effects: "Operational Executor SSD (-28 Citizens)" }
-    ]
-  },
-  {
-    id: "isd3_dev",
-    title: "ISD-III Development",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    desc: "Develop a next-generation Imperial Star Destroyer for the Imperial Regency.",
-    options: [
-      { label: "Standard (0/300)", cost: 15, maxDice: 99, effects: "Unlocks ISD-III Blueprint" }
-    ]
-  },
-  {
-    id: "shielded_interceptor",
-    title: "Shielded TIE Interceptor Development",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starfighter"],
-    desc: "Add deflector shields to TIE Interceptors to match New Republic fighters.",
-    options: [
-      { label: "Standard (0/200)", cost: 15, maxDice: 99, effects: "Unlocks Shielded TIE Interceptor" }
-    ]
-  },
-  {
-    id: "tie_facility_mod",
-    title: "TIE Construction Facility Modification (Stage 1 of 2)",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starfighter"],
-    desc: "Modify your two Zero Command TIE stations (10 sqds/week) to produce advanced TIE models.",
-    options: [
-      { label: "TIE Interceptor (0/200)", cost: 15, maxDice: 99, effects: "Converts station to TIE Interceptor production" },
-      { label: "TIE Bomber (0/200)", cost: 15, maxDice: 99, effects: "Converts station to TIE Bomber production" }
-    ]
-  },
-  {
-    id: "repair_queue",
-    title: "Repair Queue",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    requiresYardWarning: "Requires Completed Shipyard (Currently 0/0 Yards Available)",
-    desc: "Repair battle-damaged Death Squadron vessels once appropriate shipyards are built.",
-    options: [
-      { label: "Razor's Kiss (0/300) [1 Supercapital Yard/die]", cost: 10, maxDice: 99, effects: "Repairs Razor's Kiss SSD" },
-      { label: "Guardian (0/300) [1 Supercapital Yard/die]", cost: 10, maxDice: 99, effects: "Repairs Guardian SSD" },
-      { label: "ISDs (0/200, 20 Phases) [1 Capital Yard/die]", cost: 10, maxDice: 99, effects: "Repairs damaged ISDs" },
-      { label: "Cruisers (0/100, 27 Phases) [1 Cruiser Yard/die]", cost: 10, maxDice: 99, effects: "Repairs damaged Cruisers" },
-      { label: "Escorts (0/100, 30 Phases) [1 Escort Yard/die]", cost: 10, maxDice: 99, effects: "Repairs damaged Escorts" }
-    ]
-  },
-  {
-    id: "finishing_hulls",
-    title: "Finishing Partially-Built Hulls",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    tags: ["starship"],
-    requiresYardWarning: "Requires Completed Shipyard (Currently 0/0 Yards Available)",
-    desc: "Complete partially-built hulls in your fleet once matching shipyards are operational.",
-    options: [
-      { label: "Eclipse-class SSD (5,000 R, 3 Turns) [1 Supercapital Yard]", cost: 5000, maxDice: 1, effects: "Completes Eclipse SSD" },
-      { label: "ISD-II (11 Hulls) (375 R, 3 Turns) [1 Capital Yard]", cost: 375, maxDice: 1, effects: "Completes 1 ISD-II" },
-      { label: "ISD-I (11 Hulls) (375 R, 3 Turns) [1 Capital Yard]", cost: 375, maxDice: 1, effects: "Completes 1 ISD-I" },
-      { label: "Victory I-class SD (8 Hulls) (142 R, 2 Turns) [1 Cruiser Yard]", cost: 142, maxDice: 1, effects: "Completes 1 Victory-I" },
-      { label: "Victory II-class SD (8 Hulls) (125 R, 2 Turns) [1 Cruiser Yard]", cost: 125, maxDice: 1, effects: "Completes 1 Victory-II" },
-      { label: "Vindicator Heavy Cruiser (12 Hulls) (100 R, 1 Turn) [1 Cruiser Yard]", cost: 100, maxDice: 1, effects: "Completes 1 Vindicator" },
-      { label: "Immobiliser Heavy Cruiser (12 Hulls) (130 R, 1 Turn) [1 Cruiser Yard]", cost: 130, maxDice: 1, effects: "Completes 1 Immobiliser" },
-      { label: "Gladiator SD (2 Hulls) (85 R, 1 Turn) [1 Cruiser Yard]", cost: 85, maxDice: 1, effects: "Completes 1 Gladiator" },
-      { label: "Broadside Cruiser (2 Hulls) (85 R, 1 Turn) [1 Cruiser Yard]", cost: 85, maxDice: 1, effects: "Completes 1 Broadside" },
-      { label: "Carrack Light Cruiser Sqdn (2 Sqdns) (60 R, 1 Turn) [1 Escort Yard]", cost: 60, maxDice: 1, effects: "Completes 1 Carrack Sqdn" },
-      { label: "Arquitens Command Cruiser Sqdn (2 Sqdns) (50 R, 1 Turn) [1 Escort Yard]", cost: 50, maxDice: 1, effects: "Completes 1 Arquitens Command Sqdn" },
-      { label: "Arquitens Light Cruiser Sqdn (2 Sqdns) (40 R, 1 Turn) [1 Escort Yard]", cost: 40, maxDice: 1, effects: "Completes 1 Arquitens Light Sqdn" },
-      { label: "Lancer Frigate Sqdn (2 Sqdns) (47 R, 1 Turn) [1 Escort Yard]", cost: 47, maxDice: 1, effects: "Completes 1 Lancer Sqdn" },
-      { label: "Tartan Patrol Cruiser Sqdn (3 Sqdns) (42 R, 1 Turn) [1 Escort Yard]", cost: 42, maxDice: 1, effects: "Completes 1 Tartan Sqdn" },
-      { label: "Raider Corvette Sqdn (3 Sqdns) (18 R, 1 Turn) [1 Escort Yard]", cost: 18, maxDice: 1, effects: "Completes 1 Raider Sqdn" }
-    ]
-  },
-  {
-    id: "construction_queue",
-    title: "Construction Queue (Direct Order)",
-    category: "Military",
-    subCategory: "Imperial Navy",
-    isDirectOrder: true,
-    unitName: "10 TIE Fighter Squadrons",
-    unitCost: 36,
-    maxQty: 8,
-    desc: "Order construction of new starfighter squadrons directly using Resources (Does not require dice; up to 8 orders per turn)."
-  }
-];
-
-let PROJECTS = DEFAULT_PROJECTS.map(p => ({ ...p }));
-
-// ==========================================
-// DATA: DEPLOYMENT MISSIONS & FLEET POOL
-// ==========================================
-const MISSIONS = [
-  {
-    id: "gran_run",
-    title: "Great Gran Run Offensive",
-    faction: "Iron Empire",
-    duration: "Until Conclusion",
-    minCap: 20,
-    desc: "Grand Moff Adelhard wishes our aid in his conquest of the Great Gran Run to seize the shipyards at Oriolanis.",
-    reward: "100 Resources, 10 TIE Fighter Squadrons, 1 Stormtrooper Legion"
-  },
-  {
-    id: "nr_raid_shadow",
-    title: "New Republic Raiding (Shadow Empire)",
-    faction: "Shadow Empire",
-    duration: "2 Turns",
-    minCap: 20,
-    desc: "Grand Admiral Gallius Rax would like us to raid New Republic garrisons along his border.",
-    reward: "50 Resources, 3 Stockpiled Health, 10 Stockpiled Food"
-  },
-  {
-    id: "nr_raid_zero",
-    title: "New Republic Raiding (Zero Command)",
-    faction: "Zero Command",
-    duration: "2 Turns",
-    minCap: 20,
-    desc: "Grand Vizier Mas Amedda would like us to raid New Republic garrisons along his border.",
-    reward: "50 Resources, 1 Capital Goods, 1 Basing"
-  },
-  {
-    id: "core_garrison",
-    title: "Core Border Garrisons",
-    faction: "Azure Imperium",
-    duration: "3 Turns",
-    minCap: 20,
-    desc: "Grand Admiral Osted Wermis would like us to help garrison his Core borders with the New Republic.",
-    reward: "100 Resources, 1 Strategic Goods"
-  },
-  {
-    id: "inner_rim_garrison",
-    title: "Inner Rim Border Garrisons",
-    faction: "Azure Imperium",
-    duration: "3 Turns",
-    minCap: 20,
-    desc: "Grand Admiral Osted Wermis would like us to help garrison his Inner Rim borders with the New Republic.",
-    reward: "100 Resources, 1 Strategic Goods"
-  }
-];
-
-const AVAILABLE_SHIPS = [
-  { id: "isd1", name: "ISD-I", classType: "ISD", costR: 4, max: 18 },
-  { id: "isd2", name: "ISD-II", classType: "ISD", costR: 4, max: 10 },
-  { id: "tector", name: "Tector-class Star Destroyer", classType: "ISD", costR: 4, max: 2 },
-  { id: "interdictor", name: "Interdictor-class Star Destroyer", classType: "ISD", costR: 4, max: 2 },
-  { id: "venator", name: "Venator-class Star Destroyer", classType: "Cruiser", costR: 2, max: 4 },
-  { id: "vic1", name: "Victory I-class Star Destroyer", classType: "Cruiser", costR: 2, max: 11 },
-  { id: "vic2", name: "Victory II-class Star Destroyer", classType: "Cruiser", costR: 2, max: 7 },
-  { id: "immobiliser", name: "Immobiliser-class Heavy Cruiser", classType: "Cruiser", costR: 2, max: 2 },
-  { id: "gladiator", name: "Gladiator-class Star Destroyer", classType: "Cruiser", costR: 2, max: 12 },
-  { id: "broadside", name: "Broadside-class Cruiser", classType: "Cruiser", costR: 2, max: 3 },
-  { id: "vindicator", name: "Vindicator-class Heavy Cruiser", classType: "Cruiser", costR: 2, max: 12 },
-  { id: "dreadnought", name: "Dreadnought-class Heavy Cruiser", classType: "Cruiser", costR: 2, max: 8 },
-  { id: "carrack", name: "Carrack-class Light Cruiser Sqdn", classType: "Escort", costR: 1, max: 10 },
-  { id: "arq_cmd", name: "Arquitens-class Command Cruiser Sqdn", classType: "Escort", costR: 1, max: 5 },
-  { id: "arq_light", name: "Arquitens-class Light Cruiser Sqdn", classType: "Escort", costR: 1, max: 9 },
-  { id: "lancer", name: "Lancer-class Frigate Sqdn", classType: "Escort", costR: 1, max: 18 },
-  { id: "ton_falk", name: "Ton-Falk-class Escort Carrier Sqdn", classType: "Escort", costR: 1, max: 6 },
-  { id: "tartan", name: "Tartan-class Patrol Cruiser Sqdn", classType: "Escort", costR: 1, max: 12 },
-  { id: "raider", name: "Raider-class Corvette Sqdn", classType: "Escort", costR: 1, max: 20 }
-];
 
 // ==========================================
 // STATE MANAGEMENT (INSTANCE-BASED)
@@ -2167,7 +1204,7 @@ const AVAILABLE_SHIPS = [
 let nextInstanceCounter = 1;
 
 function createDefaultInstances(projectList = PROJECTS) {
-  return projectList.map(p => ({
+  return (projectList || []).map(p => ({
     instanceId: `inst_${nextInstanceCounter++}`,
     projectId: p.id,
     isClone: false,
@@ -2177,9 +1214,11 @@ function createDefaultInstances(projectList = PROJECTS) {
 }
 
 let state = {
+  currentTurn: 1,
+  loadedTurnFile: null,
   activeTab: "All",
   assumedRoll: 50,
-  instances: createDefaultInstances(),
+  instances: [],
   tieQueueQty: 0,
   deployment: {
     missionId: null,
@@ -2188,17 +1227,130 @@ let state = {
   }
 };
 
-AVAILABLE_SHIPS.forEach(s => { state.deployment.ships[s.id] = 0; });
+// ==========================================
+// TURN FILE LOADING
+// ==========================================
+function formatTurnCode(turnNum) {
+  return String(Math.max(1, parseInt(turnNum, 10) || 1)).padStart(2, "0");
+}
+
+function getTurnFileName(turnNum) {
+  return `turn${formatTurnCode(turnNum)}.json`;
+}
+
+async function tryFetchTurnFile(turnNum) {
+  const filename = getTurnFileName(turnNum);
+  try {
+    const resp = await fetch(filename, { cache: "no-store" });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data || typeof data !== "object") return null;
+    return { filename, data };
+  } catch (_err) {
+    return null;
+  }
+}
+
+function applyDatasetFields(dataset) {
+  if (!dataset || typeof dataset !== "object") return;
+
+  if (dataset.baseStats && typeof dataset.baseStats === "object") {
+    BASE_STATS = { ...BASE_STATS, ...dataset.baseStats };
+  }
+
+  if (Array.isArray(dataset.characters)) {
+    CHARACTERS = dataset.characters.filter(Boolean).map(person => attachBonusHelper(person));
+  }
+
+  if (Array.isArray(dataset.projects)) {
+    PROJECTS = dataset.projects.filter(Boolean).map(p => ({
+      ...p,
+      options: Array.isArray(p.options) ? p.options.map(o => ({ ...o })) : undefined,
+      tags: Array.isArray(p.tags) ? [...p.tags] : undefined
+    }));
+  }
+
+  if (Array.isArray(dataset.missions)) {
+    MISSIONS = dataset.missions.filter(Boolean).map(m => ({ ...m }));
+  }
+
+  if (Array.isArray(dataset.ships)) {
+    AVAILABLE_SHIPS = dataset.ships.filter(Boolean).map(s => ({ ...s }));
+    const nextShips = {};
+    AVAILABLE_SHIPS.forEach(s => {
+      nextShips[s.id] = state.deployment.ships[s.id] || 0;
+    });
+    state.deployment.ships = nextShips;
+  }
+}
+
+function applyTurnDataset(dataset, turnNum, sourceFilename) {
+  if (!dataset || typeof dataset !== "object") return false;
+
+  applyDatasetFields(dataset);
+
+  state.currentTurn = turnNum;
+  state.loadedTurnFile = sourceFilename;
+  state.instances = createDefaultInstances(PROJECTS);
+  state.tieQueueQty = 0;
+  state.deployment.missionId = null;
+  state.deployment.commanderId = null;
+
+  if (dataset.plan && typeof dataset.plan === "object") {
+    applyPlanObject(dataset.plan);
+  } else {
+    showMainGridTab("All");
+    refreshAll();
+  }
+
+  updateTurnControls();
+  return true;
+}
+
+function updateTurnControls() {
+  const badge = document.getElementById("active-turn-badge");
+  const prevBtn = document.getElementById("prev-turn-btn");
+  const code = formatTurnCode(state.currentTurn);
+
+  if (badge) {
+    badge.textContent = state.loadedTurnFile ? `Turn ${code} (${state.loadedTurnFile})` : `Turn ${code}`;
+  }
+  if (prevBtn) {
+    prevBtn.disabled = state.currentTurn <= 1;
+  }
+}
+
+async function loadTurnByNumber(turnNum, notifyOnSuccess = true) {
+  const targetTurn = Math.max(1, parseInt(turnNum, 10) || 1);
+  const found = await tryFetchTurnFile(targetTurn);
+  if (!found) {
+    showToast(`Could not find ${getTurnFileName(targetTurn)}.`, true);
+    return false;
+  }
+  applyTurnDataset(found.data, targetTurn, found.filename);
+  if (notifyOnSuccess) {
+    showToast(`Loaded ${found.filename}.`);
+  }
+  return true;
+}
+
+async function stepTurn(delta) {
+  const nextTurn = state.currentTurn + delta;
+  if (nextTurn < 1) return;
+  await loadTurnByNumber(nextTurn, true);
+}
 
 // ==========================================
 // HELPERS & VALIDATION
 // ==========================================
+let toastTimer = null;
 function showToast(msg, isError = false) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.toggle("error", isError);
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3200);
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3600);
 }
 
 function getProjectDef(projectId) {
@@ -2216,7 +1368,7 @@ function isCharDeployed(charId) {
 function isDieAssigned(charId, dieIndex) {
   if (isCharDeployed(charId)) return true;
   for (const inst of state.instances) {
-    if (inst.assignments.some(a => a.charId === charId && a.dieIndex === dieIndex)) {
+    if ((inst.assignments || []).some(a => a.charId === charId && a.dieIndex === dieIndex)) {
       return true;
     }
   }
@@ -2224,12 +1376,13 @@ function isDieAssigned(charId, dieIndex) {
 }
 
 function canAssignDie(dieType, project) {
+  if (!project) return true;
   if (dieType === "Free") return true;
   return dieType === project.category;
 }
 
 function calculateDieBonus(char, project, optionIndex) {
-  if (!char || typeof char.getBonus !== "function") return 0;
+  if (!char || typeof char.getBonus !== "function" || !project) return 0;
   const opt = project.options && project.options[optionIndex || 0];
   const effectiveProj = {
     ...project,
@@ -2241,7 +1394,7 @@ function calculateDieBonus(char, project, optionIndex) {
 function getDeployCapUsed() {
   let totalR = 0;
   AVAILABLE_SHIPS.forEach(s => {
-    totalR += (state.deployment.ships[s.id] || 0) * s.costR;
+    totalR += (state.deployment.ships[s.id] || 0) * (s.costR || 0);
   });
   return totalR;
 }
@@ -2365,7 +1518,7 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
     if (list.length === 0) return;
 
     assignedDice += list.length;
-    const opt = p.options[inst.optionIndex || 0] || { label: "Standard", cost: 0, effects: "" };
+    const opt = (p.options && p.options[inst.optionIndex || 0]) || { label: "Standard", cost: 0, effects: "" };
     const costSpent = (opt.cost || 0) * list.length;
     totals.resourcesSpent += costSpent;
     if (opt.psCost) psSpent += opt.psCost * list.length;
@@ -2462,7 +1615,7 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
 
   if (state.deployment.commanderId) {
     const cmdr = CHARACTERS.find(c => c.id === state.deployment.commanderId);
-    if (cmdr) assignedDice += cmdr.dice.length;
+    if (cmdr) assignedDice += (cmdr.dice || []).length;
   }
 
   return {
@@ -2493,27 +1646,27 @@ function updateTopStats() {
   const outcome = evaluateTurnOutcomesAtRoll(state.assumedRoll);
   const t = outcome.totals;
 
-  const totalDice = CHARACTERS.reduce((acc, c) => acc + c.dice.length, 0);
+  const totalDice = CHARACTERS.reduce((acc, c) => acc + ((c.dice && c.dice.length) || 0), 0);
   const deployR = getDeployCapUsed();
 
-  const remainingReserve = BASE_STATS.resourcesReserve - t.resourcesSpent;
-  const projectedTurnR = BASE_STATS.resourcesTurn + t.resourcesTurn;
-  const projectedPs = BASE_STATS.psCurrent + t.psCurrent;
-  const projectedUnrest = BASE_STATS.unrest + t.unrest;
-  const projectedCorruption = BASE_STATS.corruption + t.corruption;
-  const projectedBasing = BASE_STATS.basing + t.basing;
-  const projectedCitizens = BASE_STATS.citizens + t.citizens;
-  const projectedMenials = BASE_STATS.menials + t.menials;
-  const projectedLogistics = BASE_STATS.logistics + t.logistics;
-  const projectedFood = BASE_STATS.food + t.food;
-  const projectedFoodStock = BASE_STATS.foodStockpile + t.foodStockpile;
-  const projectedHealth = BASE_STATS.health + t.health;
-  const projectedHealthStock = BASE_STATS.healthStockpile + t.healthStockpile;
-  const projectedConsumer = BASE_STATS.consumerGoods + t.consumerGoods;
-  const projectedCapital = BASE_STATS.capitalGoods + t.capitalGoods;
-  const projectedStrategic = BASE_STATS.strategicGoods + t.strategicGoods;
-  const projectedShipParts = BASE_STATS.shipyardParts + t.shipyardParts;
-  const projectedBeskar = BASE_STATS.beskar + t.beskar;
+  const remainingReserve = (BASE_STATS.resourcesReserve || 0) - t.resourcesSpent;
+  const projectedTurnR = (BASE_STATS.resourcesTurn || 0) + t.resourcesTurn;
+  const projectedPs = (BASE_STATS.psCurrent || 0) + t.psCurrent;
+  const projectedUnrest = (BASE_STATS.unrest || 0) + t.unrest;
+  const projectedCorruption = (BASE_STATS.corruption || 0) + t.corruption;
+  const projectedBasing = (BASE_STATS.basing || 0) + t.basing;
+  const projectedCitizens = (BASE_STATS.citizens || 0) + t.citizens;
+  const projectedMenials = (BASE_STATS.menials || 0) + t.menials;
+  const projectedLogistics = (BASE_STATS.logistics || 0) + t.logistics;
+  const projectedFood = (BASE_STATS.food || 0) + t.food;
+  const projectedFoodStock = (BASE_STATS.foodStockpile || 0) + t.foodStockpile;
+  const projectedHealth = (BASE_STATS.health || 0) + t.health;
+  const projectedHealthStock = (BASE_STATS.healthStockpile || 0) + t.healthStockpile;
+  const projectedConsumer = (BASE_STATS.consumerGoods || 0) + t.consumerGoods;
+  const projectedCapital = (BASE_STATS.capitalGoods || 0) + t.capitalGoods;
+  const projectedStrategic = (BASE_STATS.strategicGoods || 0) + t.strategicGoods;
+  const projectedShipParts = (BASE_STATS.shipyardParts || 0) + t.shipyardParts;
+  const projectedBeskar = (BASE_STATS.beskar || 0) + t.beskar;
 
   const bar = document.getElementById("top-stats-bar");
   bar.innerHTML = `
@@ -2523,7 +1676,7 @@ function updateTopStats() {
       <span class="stat-sub">(Spent: ${t.resourcesSpent.toLocaleString()})</span>
     </div>
     <div class="stat-pill">
-      PS: <strong>${projectedPs}/${BASE_STATS.psMax}</strong>
+      PS: <strong>${projectedPs}/${BASE_STATS.psMax || 100}</strong>
       ${renderDeltaBadge(t.psCurrent)}
     </div>
     <div class="stat-pill warn">
@@ -2559,12 +1712,12 @@ function updateTopStats() {
     <div class="stat-pill ${projectedFood < 0 ? 'neg' : 'pos'}">
       Food: <strong>${formatSignedNum(projectedFood)}</strong>
       ${renderDeltaBadge(t.food)}
-      <span class="stat-sub">(${projectedFoodStock} Stockpiled${renderDeltaBadge(t.foodStockpile)}, ${BASE_STATS.foodRationing})</span>
+      <span class="stat-sub">(${projectedFoodStock} Stockpiled${renderDeltaBadge(t.foodStockpile)}, ${BASE_STATS.foodRationing || "None"})</span>
     </div>
     <div class="stat-pill ${projectedHealth < 0 ? 'neg' : 'pos'}">
       Health: <strong>${formatSignedNum(projectedHealth)}</strong>
       ${renderDeltaBadge(t.health)}
-      <span class="stat-sub">(${projectedHealthStock} Stockpiled${renderDeltaBadge(t.healthStockpile)}, ${BASE_STATS.healthRationing})</span>
+      <span class="stat-sub">(${projectedHealthStock} Stockpiled${renderDeltaBadge(t.healthStockpile)}, ${BASE_STATS.healthRationing || "None"})</span>
     </div>
     <div class="stat-pill ${projectedConsumer < 0 ? 'neg' : 'pos'}">
       Consumer Goods: <strong>${formatSignedNum(projectedConsumer)}</strong>
@@ -2752,7 +1905,7 @@ function evaluateInstanceSuccessSummary(inst) {
   const list = inst.assignments || [];
   if (list.length === 0) return null;
 
-  const opt = proj.options[inst.optionIndex || 0] || { label: "Standard" };
+  const opt = (proj.options && proj.options[inst.optionIndex || 0]) || { label: "Standard" };
   if (isImperialOption(opt)) {
     return { autoSuccess: true, badgeText: "Auto 100%", primaryProb: 1 };
   }
@@ -2804,8 +1957,8 @@ function openProbModal(preferredInstanceId = null) {
   select.innerHTML = `<option value="">-- Custom / Manual Calculation --</option>` +
     activeInstances.map(inst => {
       const p = getProjectDef(inst.projectId);
-      const opt = p.options[inst.optionIndex || 0] || { label: "Standard" };
-      return `<option value="${inst.instanceId}">${p.title} — ${opt.label} (${inst.assignments.length} dice)</option>`;
+      const opt = (p && p.options && p.options[inst.optionIndex || 0]) || { label: "Standard" };
+      return `<option value="${inst.instanceId}">${p ? p.title : inst.projectId} — ${opt.label} (${inst.assignments.length} dice)</option>`;
     }).join("");
 
   const targetInstId = preferredInstanceId || (activeInstances[0] ? activeInstances[0].instanceId : "");
@@ -2834,7 +1987,7 @@ function loadCalculatorFromInstance(instanceId) {
   const proj = getProjectDef(inst.projectId);
   if (!proj) return;
 
-  const opt = proj.options[inst.optionIndex || 0] || { label: "Standard" };
+  const opt = (proj.options && proj.options[inst.optionIndex || 0]) || { label: "Standard" };
   const spec = parseProjectTargetSpec(proj, opt);
   const bonuses = (inst.assignments || []).map(a => {
     const char = CHARACTERS.find(c => c.id === a.charId);
@@ -2918,16 +2071,26 @@ function recomputeProbModal() {
 // RENDERING
 // ==========================================
 function renderRoster() {
-  const query = document.getElementById("char-search").value.toLowerCase();
+  const query = (document.getElementById("char-search").value || "").toLowerCase();
   const container = document.getElementById("roster-list");
   container.innerHTML = "";
 
+  if (CHARACTERS.length === 0) {
+    container.innerHTML = `<div class="char-card"><div class="char-modifiers">No characters loaded. Click <strong>Import JSON</strong> or use Previous/Next.</div></div>`;
+    return;
+  }
+
   CHARACTERS.forEach(char => {
+    const name = String(char.name || char.id || "Unnamed");
+    const faction = String(char.faction || "Unaligned");
+    const desc = String(char.desc || "");
+    const dice = Array.isArray(char.dice) ? char.dice : [];
+
     const matchesSearch =
-      char.name.toLowerCase().includes(query) ||
-      (char.faction || "").toLowerCase().includes(query) ||
-      (char.desc || "").toLowerCase().includes(query) ||
-      (char.dice || []).some(d => d.toLowerCase().includes(query));
+      name.toLowerCase().includes(query) ||
+      faction.toLowerCase().includes(query) ||
+      desc.toLowerCase().includes(query) ||
+      dice.some(d => String(d).toLowerCase().includes(query));
 
     if (!matchesSearch) return;
 
@@ -2935,7 +2098,7 @@ function renderRoster() {
     const card = document.createElement("div");
     card.className = `char-card ${deployed ? 'deployed-lock' : ''}`;
 
-    const diceHTML = (char.dice || []).map((dieType, idx) => {
+    const diceHTML = dice.map((dieType, idx) => {
       const assigned = isDieAssigned(char.id, idx);
       return `
         <div class="die-token die-${dieType} ${assigned ? 'assigned' : ''}"
@@ -2949,12 +2112,12 @@ function renderRoster() {
     card.innerHTML = `
       <div class="char-header">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span class="char-name">${char.name}</span>
+          <span class="char-name">${name}</span>
           ${deployed ? `<span class="deployed-badge">On Deployment</span>` : ''}
         </div>
-        <span class="faction-tag">${char.faction || "Unaligned"}</span>
+        <span class="faction-tag">${faction}</span>
       </div>
-      <div class="char-modifiers">${char.desc || ""}</div>
+      <div class="char-modifiers">${desc}</div>
       <div class="dice-tray">${diceHTML}</div>
     `;
 
@@ -2974,6 +2137,13 @@ function renderTabs() {
     const label = tab === "Deployment" ? "🚀 Deployment" : (tab === "Final Summary" ? "📊 Final Summary" : tab);
     return `<button class="tab-btn ${extraCls} ${state.activeTab === tab ? 'active' : ''}" onclick="setTab('${tab}')">${label}</button>`;
   }).join("");
+}
+
+function showMainGridTab(tab = "All") {
+  state.activeTab = tab;
+  document.getElementById("deploy-container").style.display = "none";
+  document.getElementById("projects-grid").style.display = "grid";
+  renderTabs();
 }
 
 function setTab(tab) {
@@ -3046,118 +2216,22 @@ function renderFinalSummary() {
   const t = outcome.totals;
 
   const statRows = [
-    {
-      name: "Resources (Reserve)",
-      orig: BASE_STATS.resourcesReserve.toLocaleString() + " R",
-      next: (BASE_STATS.resourcesReserve - t.resourcesSpent).toLocaleString() + " R",
-      delta: -t.resourcesSpent,
-      invert: false
-    },
-    {
-      name: "Resources (Per Turn)",
-      orig: `${BASE_STATS.resourcesTurn} R`,
-      next: `${BASE_STATS.resourcesTurn + t.resourcesTurn} R`,
-      delta: t.resourcesTurn,
-      invert: false
-    },
-    {
-      name: "Political Support (PS)",
-      orig: `${BASE_STATS.psCurrent}/${BASE_STATS.psMax}`,
-      next: `${BASE_STATS.psCurrent + t.psCurrent}/${BASE_STATS.psMax}`,
-      delta: t.psCurrent,
-      invert: false
-    },
-    {
-      name: "Unrest",
-      orig: `${BASE_STATS.unrest}`,
-      next: `${BASE_STATS.unrest + t.unrest}`,
-      delta: t.unrest,
-      invert: true
-    },
-    {
-      name: "Corruption",
-      orig: `${BASE_STATS.corruption}`,
-      next: `${BASE_STATS.corruption + t.corruption}`,
-      delta: t.corruption,
-      invert: true
-    },
-    {
-      name: "Basing",
-      orig: formatSignedNum(BASE_STATS.basing),
-      next: formatSignedNum(BASE_STATS.basing + t.basing),
-      delta: t.basing,
-      invert: false
-    },
-    {
-      name: "Citizens",
-      orig: formatSignedNum(BASE_STATS.citizens),
-      next: formatSignedNum(BASE_STATS.citizens + t.citizens),
-      delta: t.citizens,
-      invert: false
-    },
-    {
-      name: "Menials",
-      orig: formatSignedNum(BASE_STATS.menials),
-      next: formatSignedNum(BASE_STATS.menials + t.menials),
-      delta: t.menials,
-      invert: false
-    },
-    {
-      name: "Logistics",
-      orig: formatSignedNum(BASE_STATS.logistics),
-      next: formatSignedNum(BASE_STATS.logistics + t.logistics),
-      delta: t.logistics,
-      invert: false
-    },
-    {
-      name: `Food (${BASE_STATS.foodRationing})`,
-      orig: `${formatSignedNum(BASE_STATS.food)} (${BASE_STATS.foodStockpile} Stock)`,
-      next: `${formatSignedNum(BASE_STATS.food + t.food)} (${BASE_STATS.foodStockpile + t.foodStockpile} Stock)`,
-      delta: t.food,
-      invert: false
-    },
-    {
-      name: `Health (${BASE_STATS.healthRationing})`,
-      orig: `${formatSignedNum(BASE_STATS.health)} (${BASE_STATS.healthStockpile} Stock)`,
-      next: `${formatSignedNum(BASE_STATS.health + t.health)} (${BASE_STATS.healthStockpile + t.healthStockpile} Stock)`,
-      delta: t.health,
-      invert: false
-    },
-    {
-      name: "Consumer Goods",
-      orig: formatSignedNum(BASE_STATS.consumerGoods),
-      next: formatSignedNum(BASE_STATS.consumerGoods + t.consumerGoods),
-      delta: t.consumerGoods,
-      invert: false
-    },
-    {
-      name: "Capital Goods",
-      orig: formatSignedNum(BASE_STATS.capitalGoods),
-      next: formatSignedNum(BASE_STATS.capitalGoods + t.capitalGoods),
-      delta: t.capitalGoods,
-      invert: false
-    },
-    {
-      name: "Strategic Goods",
-      orig: formatSignedNum(BASE_STATS.strategicGoods),
-      next: formatSignedNum(BASE_STATS.strategicGoods + t.strategicGoods),
-      delta: t.strategicGoods,
-      invert: false
-    },
-    {
-      name: "Shipyard Parts",
-      orig: formatSignedNum(BASE_STATS.shipyardParts),
-      next: formatSignedNum(BASE_STATS.shipyardParts + t.shipyardParts),
-      delta: t.shipyardParts,
-      invert: false
-    },
-    {
-      name: "Beskar",
-      orig: formatSignedNum(BASE_STATS.beskar),
-      next: formatSignedNum(BASE_STATS.beskar + t.beskar),
-      delta: t.beskar,
-      invert: false
-    }
+    { name: "Resources (Reserve)", orig: BASE_STATS.resourcesReserve.toLocaleString() + " R", next: (BASE_STATS.resourcesReserve - t.resourcesSpent).toLocaleString() + " R", delta: -t.resourcesSpent, invert: false },
+    { name: "Resources (Per Turn)", orig: `${BASE_STATS.resourcesTurn} R`, next: `${BASE_STATS.resourcesTurn + t.resourcesTurn} R`, delta: t.resourcesTurn, invert: false },
+    { name: "Political Support (PS)", orig: `${BASE_STATS.psCurrent}/${BASE_STATS.psMax}`, next: `${BASE_STATS.psCurrent + t.psCurrent}/${BASE_STATS.psMax}`, delta: t.psCurrent, invert: false },
+    { name: "Unrest", orig: `${BASE_STATS.unrest}`, next: `${BASE_STATS.unrest + t.unrest}`, delta: t.unrest, invert: true },
+    { name: "Corruption", orig: `${BASE_STATS.corruption}`, next: `${BASE_STATS.corruption + t.corruption}`, delta: t.corruption, invert: true },
+    { name: "Basing", orig: formatSignedNum(BASE_STATS.basing), next: formatSignedNum(BASE_STATS.basing + t.basing), delta: t.basing, invert: false },
+    { name: "Citizens", orig: formatSignedNum(BASE_STATS.citizens), next: formatSignedNum(BASE_STATS.citizens + t.citizens), delta: t.citizens, invert: false },
+    { name: "Menials", orig: formatSignedNum(BASE_STATS.menials), next: formatSignedNum(BASE_STATS.menials + t.menials), delta: t.menials, invert: false },
+    { name: "Logistics", orig: formatSignedNum(BASE_STATS.logistics), next: formatSignedNum(BASE_STATS.logistics + t.logistics), delta: t.logistics, invert: false },
+    { name: `Food (${BASE_STATS.foodRationing})`, orig: `${formatSignedNum(BASE_STATS.food)} (${BASE_STATS.foodStockpile} Stock)`, next: `${formatSignedNum(BASE_STATS.food + t.food)} (${BASE_STATS.foodStockpile + t.foodStockpile} Stock)`, delta: t.food, invert: false },
+    { name: `Health (${BASE_STATS.healthRationing})`, orig: `${formatSignedNum(BASE_STATS.health)} (${BASE_STATS.healthStockpile} Stock)`, next: `${formatSignedNum(BASE_STATS.health + t.health)} (${BASE_STATS.healthStockpile + t.healthStockpile} Stock)`, delta: t.health, invert: false },
+    { name: "Consumer Goods", orig: formatSignedNum(BASE_STATS.consumerGoods), next: formatSignedNum(BASE_STATS.consumerGoods + t.consumerGoods), delta: t.consumerGoods, invert: false },
+    { name: "Capital Goods", orig: formatSignedNum(BASE_STATS.capitalGoods), next: formatSignedNum(BASE_STATS.capitalGoods + t.capitalGoods), delta: t.capitalGoods, invert: false },
+    { name: "Strategic Goods", orig: formatSignedNum(BASE_STATS.strategicGoods), next: formatSignedNum(BASE_STATS.strategicGoods + t.strategicGoods), delta: t.strategicGoods, invert: false },
+    { name: "Shipyard Parts", orig: formatSignedNum(BASE_STATS.shipyardParts), next: formatSignedNum(BASE_STATS.shipyardParts + t.shipyardParts), delta: t.shipyardParts, invert: false },
+    { name: "Beskar", orig: formatSignedNum(BASE_STATS.beskar), next: formatSignedNum(BASE_STATS.beskar + t.beskar), delta: t.beskar, invert: false }
   ];
 
   const statsCardsHTML = statRows.map(r => {
@@ -3228,6 +2302,17 @@ function renderProjects() {
   const grid = document.getElementById("projects-grid");
   grid.innerHTML = "";
 
+  if (PROJECTS.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state-box">
+        <strong style="color:#fff;font-size:0.95rem;">No Turn Data Loaded</strong>
+        <span>Click <strong>Import JSON</strong> or use Previous/Next to load turn data.</span>
+        <button class="success" onclick="triggerJsonFileImport()">Import JSON</button>
+      </div>
+    `;
+    return;
+  }
+
   const seenCounts = {};
 
   state.instances.forEach(inst => {
@@ -3258,8 +2343,8 @@ function renderProjects() {
       const cost = state.tieQueueQty * unitCost;
       card.innerHTML = `
         <div class="proj-top">
-          <div class="proj-title">${proj.title}</div>
-          <span class="proj-cat-badge die-Military">${proj.subCategory || proj.category}</span>
+          <div class="proj-title">${proj.title || "Direct Order"}</div>
+          <span class="proj-cat-badge die-Military">${proj.subCategory || proj.category || "Military"}</span>
         </div>
         <div class="proj-desc">${proj.desc || ""}</div>
         <div class="order-controls">
@@ -3281,22 +2366,24 @@ function renderProjects() {
     const opts = proj.options && proj.options.length > 0
       ? proj.options
       : [{ label: "Standard", cost: 0, maxDice: 99, effects: "" }];
-    const optIdx = Math.min(inst.optionIndex || 0, opts.length - 1);
+    const optIdx = Math.max(0, Math.min(inst.optionIndex || 0, opts.length - 1));
     const currentOpt = opts[optIdx];
-    const totalProjCost = (currentOpt.cost || 0) * assignedList.length;
+    const optCost = currentOpt.cost || 0;
+    const optMaxDice = currentOpt.maxDice || 99;
+    const totalProjCost = optCost * assignedList.length;
     const probSummary = evaluateInstanceSuccessSummary(inst);
 
     const optionsControlHTML = opts.length > 1
       ? `<div class="option-row">
            <select class="option-selector" onchange="changeOption('${inst.instanceId}', this.value)">
-             ${opts.map((o, i) => `<option value="${i}" ${i === optIdx ? 'selected' : ''}>${o.label} — ${o.cost} R/Die</option>`).join("")}
+             ${opts.map((o, i) => `<option value="${i}" ${i === optIdx ? 'selected' : ''}>${o.label || "Option"} — ${o.cost || 0} R/Die</option>`).join("")}
            </select>
            <button class="add-btn" title="Duplicate this task to work on another option simultaneously" onclick="duplicateInstance('${inst.instanceId}')">+ Add Option</button>
          </div>`
-      : `<div style="font-size:0.8rem;color:#cbd5e1;font-weight:600;">${currentOpt.label} — <span style="color:var(--accent-gold);">${currentOpt.cost} R/Die</span></div>`;
+      : `<div style="font-size:0.8rem;color:#cbd5e1;font-weight:600;">${currentOpt.label || "Standard"} — <span style="color:var(--accent-gold);">${optCost} R/Die</span></div>`;
 
     const slotsHTML = assignedList.length === 0
-      ? `<div class="drop-placeholder">Drop <strong>${proj.category}</strong> or <strong>Free</strong> Die here</div>`
+      ? `<div class="drop-placeholder">Drop <strong>${proj.category || "Any"}</strong> or <strong>Free</strong> Die here</div>`
       : assignedList.map((item, slotIdx) => {
           const char = CHARACTERS.find(c => c.id === item.charId) || { name: item.charId };
           const bonus = calculateDieBonus(char, proj, optIdx);
@@ -3317,20 +2404,20 @@ function renderProjects() {
     card.innerHTML = `
       <div class="proj-top">
         <div class="proj-title">
-          ${proj.title}
+          ${proj.title || proj.id}
           ${instanceNum > 1 ? `<span class="clone-badge">Parallel #${instanceNum}</span>` : ''}
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
           ${probSummary ? `<span class="prob-chip" title="Open in Success Probability Calculator" onclick="openProbModal('${inst.instanceId}')">${probSummary.badgeText}</span>` : ''}
-          <span class="proj-cat-badge die-${proj.category}">${proj.subCategory || proj.category}</span>
+          <span class="proj-cat-badge die-${proj.category || "Free"}">${proj.subCategory || proj.category || "General"}</span>
           ${inst.isClone ? `<button class="danger" style="padding:2px 6px;font-size:0.72rem;" title="Remove parallel task" onclick="removeInstance('${inst.instanceId}')">✕</button>` : ''}
         </div>
       </div>
       <div class="proj-desc">${proj.desc || ""}</div>
       ${optionsControlHTML}
       <div class="proj-meta">
-        <span class="meta-tag cost">Cost: ${currentOpt.cost} R/die ${assignedList.length > 0 ? `(Total: ${totalProjCost} R)` : ''}</span>
-        <span class="meta-tag">Max Dice: ${currentOpt.maxDice === 99 ? 'Unlimited' : currentOpt.maxDice}</span>
+        <span class="meta-tag cost">Cost: ${optCost} R/die ${assignedList.length > 0 ? `(Total: ${totalProjCost} R)` : ''}</span>
+        <span class="meta-tag">Max Dice: ${optMaxDice === 99 ? 'Unlimited' : optMaxDice}</span>
         <span class="meta-tag effect-pos">${currentOpt.effects || ""}</span>
         ${proj.requiresYardWarning ? `<span class="meta-tag warn">⚠ ${proj.requiresYardWarning}</span>` : ''}
       </div>
@@ -3352,19 +2439,21 @@ function renderDeployment() {
   const capUsed = getDeployCapUsed();
   const selectedMission = MISSIONS.find(m => m.id === state.deployment.missionId);
 
-  const missionsHTML = MISSIONS.map(m => {
-    const isSel = state.deployment.missionId === m.id;
-    return `
-      <div class="mission-card ${isSel ? 'selected' : ''}" onclick="selectMission('${m.id}')">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <strong style="color:#fff;font-size:0.92rem;">${m.title}</strong>
-          <span class="faction-tag">${m.faction} • ${m.duration}</span>
-        </div>
-        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">${m.desc}</div>
-        <div style="font-size:0.75rem;color:var(--accent-green);"><strong>Payment:</strong> ${m.reward} (Min ${m.minCap}R Fleet)</div>
-      </div>
-    `;
-  }).join("");
+  const missionsHTML = MISSIONS.length === 0
+    ? `<div class="project-card"><div class="proj-desc">No missions loaded.</div></div>`
+    : MISSIONS.map(m => {
+        const isSel = state.deployment.missionId === m.id;
+        return `
+          <div class="mission-card ${isSel ? 'selected' : ''}" onclick="selectMission('${m.id}')">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <strong style="color:#fff;font-size:0.92rem;">${m.title}</strong>
+              <span class="faction-tag">${m.faction} • ${m.duration}</span>
+            </div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">${m.desc}</div>
+            <div style="font-size:0.75rem;color:var(--accent-green);"><strong>Payment:</strong> ${m.reward} (Min ${m.minCap}R Fleet)</div>
+          </div>
+        `;
+      }).join("");
 
   const shipsHTML = AVAILABLE_SHIPS.map(s => {
     const count = state.deployment.ships[s.id] || 0;
@@ -3410,7 +2499,7 @@ function renderDeployment() {
           <h4 style="font-size:0.85rem;text-transform:uppercase;color:var(--text-muted);">2. Assign Commander</h4>
           <select class="option-selector" onchange="assignDeployCommander(this.value)">
             <option value="">-- No Commander Assigned --</option>
-            ${deployableChars.map(c => `<option value="${c.id}" ${state.deployment.commanderId === c.id ? 'selected' : ''}>${c.rankTitle}</option>`).join("")}
+            ${deployableChars.map(c => `<option value="${c.id}" ${state.deployment.commanderId === c.id ? 'selected' : ''}>${c.rankTitle || c.name}</option>`).join("")}
           </select>
           ${state.deployment.commanderId ? `<div style="font-size:0.75rem;color:var(--accent-cyan);">Commander's dice are locked for this turn.</div>` : ''}
         </div>
@@ -3425,7 +2514,7 @@ function renderDeployment() {
               <thead>
                 <tr><th>Hull / Sqdn</th><th>Class</th><th>Avail</th><th>Deploy</th><th>Cap</th></tr>
               </thead>
-              <tbody>${shipsHTML}</tbody>
+              <tbody>${shipsHTML || '<tr><td colspan="5">No ships loaded.</td></tr>'}</tbody>
             </table>
           </div>
         </div>
@@ -3442,6 +2531,7 @@ function duplicateInstance(sourceInstanceId) {
   if (sourceIdx === -1) return;
   const source = state.instances[sourceIdx];
   const proj = getProjectDef(source.projectId);
+  if (!proj || !Array.isArray(proj.options) || proj.options.length === 0) return;
 
   const usedIndices = new Set(
     state.instances.filter(i => i.projectId === proj.id).map(i => i.optionIndex)
@@ -3486,7 +2576,7 @@ function handleDragOver(e, instanceId) {
   e.preventDefault();
   if (!draggedData) return;
   const inst = getInstance(instanceId);
-  const proj = getProjectDef(inst.projectId);
+  const proj = inst ? getProjectDef(inst.projectId) : null;
   const valid = canAssignDie(draggedData.dieType, proj);
   e.currentTarget.classList.add(valid ? "drag-over" : "drag-invalid");
 }
@@ -3504,8 +2594,10 @@ function handleDrop(e, instanceId) {
   draggedData = null;
 
   const inst = getInstance(instanceId);
-  const proj = getProjectDef(inst.projectId);
-  const opt = proj.options[inst.optionIndex || 0];
+  const proj = inst ? getProjectDef(inst.projectId) : null;
+  if (!inst || !proj) return;
+
+  const opt = (proj.options && proj.options[inst.optionIndex || 0]) || { maxDice: 99, label: "Standard" };
 
   if (!canAssignDie(dieType, proj)) {
     showToast(`Cannot assign a ${dieType} Die to a ${proj.category} project!`, true);
@@ -3517,7 +2609,7 @@ function handleDrop(e, instanceId) {
     return;
   }
 
-  if (inst.assignments.length >= opt.maxDice) {
+  if (inst.assignments.length >= (opt.maxDice || 99)) {
     showToast(`"${opt.label}" allows a maximum of ${opt.maxDice} die!`, true);
     return;
   }
@@ -3535,10 +2627,11 @@ function removeAssignment(instanceId, slotIdx) {
 
 function changeOption(instanceId, newIdx) {
   const inst = getInstance(instanceId);
-  if (!inst) return;
+  const proj = inst ? getProjectDef(inst.projectId) : null;
+  if (!inst || !proj) return;
   const idx = parseInt(newIdx, 10);
   inst.optionIndex = idx;
-  const maxAllowed = getProjectDef(inst.projectId).options[idx].maxDice;
+  const maxAllowed = (proj.options && proj.options[idx] && proj.options[idx].maxDice) || 99;
   if (inst.assignments.length > maxAllowed) {
     inst.assignments = inst.assignments.slice(0, maxAllowed);
     showToast(`Trimmed excess dice to fit ${maxAllowed}-die limit.`, true);
@@ -3577,6 +2670,7 @@ function assignDeployCommander(charId) {
 
 function updateShipCount(shipId, val) {
   const ship = AVAILABLE_SHIPS.find(s => s.id === shipId);
+  if (!ship) return;
   let num = parseInt(val, 10) || 0;
   num = Math.max(0, Math.min(ship.max, num));
 
@@ -3598,7 +2692,7 @@ function clearDeployment() {
 }
 
 function resetAll() {
-  state.instances = createDefaultInstances();
+  state.instances = createDefaultInstances(PROJECTS);
   state.tieQueueQty = 0;
   state.assumedRoll = 50;
   clearDeployment();
@@ -3609,10 +2703,16 @@ function refreshAll() {
   updateTopStats();
   renderRoster();
   if (state.activeTab === "Deployment") {
+    document.getElementById("projects-grid").style.display = "none";
+    document.getElementById("deploy-container").style.display = "flex";
     renderDeployment();
   } else if (state.activeTab === "Final Summary") {
+    document.getElementById("projects-grid").style.display = "none";
+    document.getElementById("deploy-container").style.display = "flex";
     renderFinalSummary();
   } else {
+    document.getElementById("deploy-container").style.display = "none";
+    document.getElementById("projects-grid").style.display = "grid";
     renderProjects();
   }
 }
@@ -3816,30 +2916,10 @@ function removePlanSlotRow(index) {
 }
 
 // ==========================================
-// JSON IMPORT / EXPORT (PLAN, TASKS, PEOPLE)
+// PLAN-ONLY JSON IMPORT / EXPORT
 // ==========================================
-let currentJsonScope = "plan";
-
-const JSON_SCOPE_META = {
-  plan: {
-    title: "JSON Import / Export — Plan",
-    hint: "Exports/imports turn assignments, parallel tasks, TIE queue, and fleet deployment.",
-    filename: "regency-plan.json"
-  },
-  tasks: {
-    title: "JSON Import / Export — Tasks",
-    hint: "Exports/imports project definitions, categories, options, costs, and dice limits.",
-    filename: "regency-tasks.json"
-  },
-  people: {
-    title: "JSON Import / Export — People",
-    hint: "Exports/imports characters & organisations, dice pools, deployment flags, and bonusRules.",
-    filename: "regency-people.json"
-  }
-};
-
-function openJsonModal(scope = "plan") {
-  setJsonScope(scope, true);
+function openJsonModal() {
+  exportPlanJson(false);
   document.getElementById("json-modal").classList.add("open");
 }
 
@@ -3847,26 +2927,11 @@ function closeJsonModal() {
   document.getElementById("json-modal").classList.remove("open");
 }
 
-function setJsonScope(scope, autoPopulate = false) {
-  if (!JSON_SCOPE_META[scope]) return;
-  currentJsonScope = scope;
-
-  ["plan", "tasks", "people"].forEach(s => {
-    document.getElementById(`scope-btn-${s}`).classList.toggle("active", s === scope);
-  });
-
-  document.getElementById("json-modal-title").textContent = JSON_SCOPE_META[scope].title;
-  document.getElementById("json-scope-hint").textContent = JSON_SCOPE_META[scope].hint;
-
-  if (autoPopulate) {
-    exportCurrentJsonScope(false);
-  }
-}
-
 function getSerializedPlan() {
   return {
     type: "plan",
     version: 1,
+    turn: state.currentTurn,
     assumedRoll: state.assumedRoll,
     tieQueueQty: state.tieQueueQty,
     instances: state.instances.map(inst => ({
@@ -3888,78 +2953,51 @@ function getSerializedPlan() {
   };
 }
 
-function getSerializedTasks() {
-  return {
-    type: "tasks",
-    version: 1,
-    tasks: PROJECTS.map(p => {
-      const copy = { ...p };
-      if (Array.isArray(p.options)) {
-        copy.options = p.options.map(o => ({ ...o }));
-      }
-      if (Array.isArray(p.tags)) {
-        copy.tags = [...p.tags];
-      }
-      return copy;
-    })
-  };
-}
-
-function getSerializedPeople() {
-  return {
-    type: "people",
-    version: 1,
-    people: CHARACTERS.map(c => {
-      const { getBonus, ...rest } = c;
-      return {
-        ...rest,
-        dice: Array.isArray(c.dice) ? [...c.dice] : [],
-        bonusRules: Array.isArray(c.bonusRules) ? c.bonusRules.map(r => ({ ...r })) : []
-      };
-    })
-  };
-}
-
-function exportCurrentJsonScope(notify = true) {
-  let payload;
-  if (currentJsonScope === "plan") payload = getSerializedPlan();
-  else if (currentJsonScope === "tasks") payload = getSerializedTasks();
-  else payload = getSerializedPeople();
-
+function exportPlanJson(notify = true) {
+  const payload = getSerializedPlan();
   document.getElementById("json-text").value = JSON.stringify(payload, null, 2);
   if (notify) {
-    showToast(`Exported ${currentJsonScope} JSON.`);
+    showToast("Exported plan order JSON.");
   }
 }
 
 function triggerJsonFileImport() {
-  document.getElementById("json-file-input").value = "";
-  document.getElementById("json-file-input").click();
+  const input = document.getElementById("json-file-input");
+  if (!input) {
+    showToast("File picker not found.", true);
+    return;
+  }
+  input.value = "";
+  input.click();
 }
 
 function handleJsonFileSelected(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
+  const file = event && event.target && event.target.files && event.target.files[0];
+  if (!file) {
+    showToast("No file selected.", true);
+    return;
+  }
   const reader = new FileReader();
   reader.onload = () => {
-    document.getElementById("json-text").value = String(reader.result || "");
-    applyJsonImport();
+    const content = String(reader.result || "");
+    const jsonTextarea = document.getElementById("json-text");
+    if (jsonTextarea) jsonTextarea.value = content;
+    applyPlanJsonText(content, file.name);
   };
-  reader.onerror = () => showToast("Failed to read JSON file.", true);
+  reader.onerror = () => showToast(`Failed to read "${file.name}".`, true);
   reader.readAsText(file);
 }
 
 function downloadJsonFile() {
-  const text = document.getElementById("json-text").value;
-  if (!text.trim()) {
-    exportCurrentJsonScope(false);
+  if (!document.getElementById("json-text").value.trim()) {
+    exportPlanJson(false);
   }
   const content = document.getElementById("json-text").value;
   const blob = new Blob([content], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = JSON_SCOPE_META[currentJsonScope].filename;
+  a.download = `regency-turn${formatTurnCode(state.currentTurn)}-plan.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -3970,14 +3008,16 @@ function downloadJsonFile() {
 function copyJsonText() {
   const ta = document.getElementById("json-text");
   if (!ta.value.trim()) {
-    exportCurrentJsonScope(false);
+    exportPlanJson(false);
   }
   ta.select();
   document.execCommand("copy");
-  showToast("Copied JSON to clipboard!");
+  showToast("Copied plan JSON to clipboard!");
 }
 
 function reconcileAssignmentsWithCurrentData() {
+  if (CHARACTERS.length === 0) return;
+
   const charMap = new Map(CHARACTERS.map(c => [c.id, c]));
   const usedDice = new Set();
 
@@ -3992,7 +3032,7 @@ function reconcileAssignmentsWithCurrentData() {
   state.instances.forEach(inst => {
     const proj = getProjectDef(inst.projectId);
     if (!proj || proj.isDirectOrder) {
-      inst.assignments = [];
+      if (proj && proj.isDirectOrder) inst.assignments = [];
       return;
     }
     const opts = proj.options && proj.options.length > 0 ? proj.options : [{ cost: 0, maxDice: 99 }];
@@ -4020,7 +3060,8 @@ function reconcileAssignmentsWithCurrentData() {
 
 function applyPlanObject(planObj) {
   const incomingInstances = Array.isArray(planObj.instances) ? planObj.instances : [];
-  const baseInstances = createDefaultInstances();
+  const hasProjectCatalog = PROJECTS.length > 0;
+  const baseInstances = createDefaultInstances(PROJECTS);
   const baseByProjId = new Map(baseInstances.map(i => [i.projectId, i]));
   const seenBaseIds = new Set();
   const rebuiltInstances = [];
@@ -4028,7 +3069,7 @@ function applyPlanObject(planObj) {
   for (const rawInst of incomingInstances) {
     if (!rawInst || !rawInst.projectId) continue;
     const projDef = getProjectDef(rawInst.projectId);
-    if (!projDef) continue;
+    if (hasProjectCatalog && !projDef) continue;
 
     let instanceId = rawInst.instanceId && typeof rawInst.instanceId === "string"
       ? rawInst.instanceId
@@ -4055,11 +3096,13 @@ function applyPlanObject(planObj) {
     });
   }
 
-  PROJECTS.forEach(p => {
-    if (!seenBaseIds.has(p.id) && baseByProjId.has(p.id)) {
-      rebuiltInstances.push(baseByProjId.get(p.id));
-    }
-  });
+  if (hasProjectCatalog) {
+    PROJECTS.forEach(p => {
+      if (!seenBaseIds.has(p.id) && baseByProjId.has(p.id)) {
+        rebuiltInstances.push(baseByProjId.get(p.id));
+      }
+    });
+  }
 
   state.instances = rebuiltInstances;
   state.tieQueueQty = Math.max(0, Math.min(8, parseInt(planObj.tieQueueQty, 10) || 0));
@@ -4069,165 +3112,87 @@ function applyPlanObject(planObj) {
   }
 
   const dep = planObj.deployment && typeof planObj.deployment === "object" ? planObj.deployment : {};
-  const validMission = MISSIONS.some(m => m.id === dep.missionId) ? dep.missionId : null;
+  const validMission = MISSIONS.length === 0 || MISSIONS.some(m => m.id === dep.missionId)
+    ? (dep.missionId || null)
+    : null;
   state.deployment.missionId = validMission;
   state.deployment.commanderId = dep.commanderId || null;
 
   const nextShips = {};
   let runningCap = 0;
-  AVAILABLE_SHIPS.forEach(s => {
-    const rawCount = dep.ships && dep.ships[s.id] !== undefined ? parseInt(dep.ships[s.id], 10) : 0;
-    let clamped = Math.max(0, Math.min(s.max, isNaN(rawCount) ? 0 : rawCount));
-    if (runningCap + clamped * s.costR > 20) {
-      clamped = Math.max(0, Math.floor((20 - runningCap) / s.costR));
-    }
-    runningCap += clamped * s.costR;
-    nextShips[s.id] = clamped;
-  });
+  if (AVAILABLE_SHIPS.length > 0) {
+    AVAILABLE_SHIPS.forEach(s => {
+      const rawCount = dep.ships && dep.ships[s.id] !== undefined ? parseInt(dep.ships[s.id], 10) : 0;
+      let clamped = Math.max(0, Math.min(s.max, isNaN(rawCount) ? 0 : rawCount));
+      if (runningCap + clamped * s.costR > 20) {
+        clamped = Math.max(0, Math.floor((20 - runningCap) / s.costR));
+      }
+      runningCap += clamped * s.costR;
+      nextShips[s.id] = clamped;
+    });
+  } else if (dep.ships && typeof dep.ships === "object") {
+    Object.assign(nextShips, dep.ships);
+  }
   state.deployment.ships = nextShips;
 
   reconcileAssignmentsWithCurrentData();
   refreshAll();
 }
 
-function applyJsonImport() {
-  const raw = document.getElementById("json-text").value.trim();
-  if (!raw) {
-    showToast("JSON input is empty.", true);
-    return;
-  }
-
-  let parsed;
+function applyPlanJsonText(rawText, sourceLabel = "JSON") {
   try {
-    parsed = JSON.parse(raw);
+    const raw = String(rawText || "").trim();
+    if (!raw) {
+      showToast("JSON input is empty.", true);
+      return;
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      showToast("JSON must be a JSON object.", true);
+      return;
+    }
+
+    if (parsed.turn !== undefined && !isNaN(parseInt(parsed.turn, 10))) {
+      state.currentTurn = Math.max(1, parseInt(parsed.turn, 10));
+      if (!parsed.baseStats && !parsed.characters && !parsed.projects) {
+        state.loadedTurnFile = null;
+      }
+    }
+
+    const hasDatasetFields = Boolean(
+      parsed.baseStats || parsed.characters || parsed.projects || parsed.missions || parsed.ships
+    );
+    if (hasDatasetFields) {
+      applyDatasetFields(parsed);
+      if (!parsed.plan && !parsed.instances) {
+        state.instances = createDefaultInstances(PROJECTS);
+        state.tieQueueQty = 0;
+        state.deployment.missionId = null;
+        state.deployment.commanderId = null;
+      }
+    }
+
+    const planPayload = parsed.plan && typeof parsed.plan === "object" ? parsed.plan : parsed;
+    applyPlanObject(planPayload);
+
+    const assignedCount = state.instances.reduce((acc, i) => acc + (i.assignments ? i.assignments.length : 0), 0);
+    if (hasDatasetFields || (assignedCount === 0 && state.tieQueueQty === 0 && !state.deployment.missionId && !state.deployment.commanderId)) {
+      showMainGridTab("All");
+    }
+
+    updateTurnControls();
+    refreshAll();
+    closeJsonModal();
+    showToast(`Imported ${sourceLabel}: ${CHARACTERS.length} chars, ${PROJECTS.length} projects, ${assignedCount} dice assigned.`);
   } catch (err) {
-    showToast(`Invalid JSON: ${err.message}`, true);
-    return;
+    console.error("JSON import error:", err);
+    showToast(`Import failed: ${err && err.message ? err.message : "Invalid JSON"}`, true);
   }
+}
 
-  const detectedScope = parsed && typeof parsed === "object" && !Array.isArray(parsed) && parsed.type
-    ? parsed.type
-    : currentJsonScope;
-
-  if (detectedScope === "tasks") {
-    const list = Array.isArray(parsed) ? parsed : parsed.tasks;
-    if (!Array.isArray(list) || list.length === 0) {
-      showToast("Tasks JSON must be a non-empty array or contain a 'tasks' array.", true);
-      return;
-    }
-    for (const t of list) {
-      if (!t || !t.id || !t.title || !t.category) {
-        showToast("Each task requires 'id', 'title', and 'category'.", true);
-        return;
-      }
-      if (!t.isDirectOrder && (!Array.isArray(t.options) || t.options.length === 0)) {
-        showToast(`Task "${t.title}" requires a non-empty 'options' array.`, true);
-        return;
-      }
-    }
-
-    PROJECTS = list.map(t => ({
-      ...t,
-      options: Array.isArray(t.options) ? t.options.map(o => ({
-        label: o.label || "Standard",
-        cost: Number(o.cost) || 0,
-        maxDice: o.maxDice !== undefined ? Number(o.maxDice) : 99,
-        effects: o.effects || "",
-        ...(o.psCost ? { psCost: Number(o.psCost) } : {}),
-        ...(o.isStarfighter ? { isStarfighter: true } : {}),
-        ...(o.isImperial !== undefined ? { isImperial: Boolean(o.isImperial) } : {}),
-        ...(o.corruption ? { corruption: String(o.corruption) } : {})
-      })) : undefined,
-      tags: Array.isArray(t.tags) ? [...t.tags] : undefined
-    }));
-
-    const existingByProj = new Map();
-    state.instances.forEach(inst => {
-      if (getProjectDef(inst.projectId)) {
-        if (!existingByProj.has(inst.projectId)) existingByProj.set(inst.projectId, []);
-        existingByProj.get(inst.projectId).push({
-          ...inst,
-          instanceId: inst.instanceId || `inst_${nextInstanceCounter++}`,
-          assignments: Array.isArray(inst.assignments) ? [...inst.assignments] : []
-        });
-      }
-    });
-
-    const nextInstances = [];
-    PROJECTS.forEach(p => {
-      if (existingByProj.has(p.id)) {
-        nextInstances.push(...existingByProj.get(p.id));
-      } else {
-        nextInstances.push({
-          instanceId: `inst_${nextInstanceCounter++}`,
-          projectId: p.id,
-          isClone: false,
-          optionIndex: 0,
-          assignments: []
-        });
-      }
-    });
-    state.instances = nextInstances;
-
-    const queueDef = PROJECTS.find(p => p.isDirectOrder);
-    state.tieQueueQty = Math.max(0, Math.min((queueDef && queueDef.maxQty) || 8, parseInt(state.tieQueueQty, 10) || 0));
-
-    reconcileAssignmentsWithCurrentData();
-    setJsonScope("tasks", false);
-    refreshAll();
-    closeJsonModal();
-    showToast(`Imported ${PROJECTS.length} tasks.`);
-    return;
-  }
-
-  if (detectedScope === "people") {
-    const list = Array.isArray(parsed) ? parsed : parsed.people;
-    if (!Array.isArray(list)) {
-      showToast("People JSON must be an array or contain a 'people' array.", true);
-      return;
-    }
-    for (const person of list) {
-      if (!person || !person.id || !person.name || !Array.isArray(person.dice)) {
-        showToast("Each person requires 'id', 'name', and a 'dice' array.", true);
-        return;
-      }
-    }
-
-    const defaultById = new Map(DEFAULT_CHARACTERS.map(c => [c.id, c]));
-    CHARACTERS = list.map(person => {
-      const base = {
-        id: String(person.id),
-        name: String(person.name),
-        rankTitle: person.rankTitle ? String(person.rankTitle) : String(person.name),
-        deployable: Boolean(person.deployable),
-        faction: person.faction ? String(person.faction) : "Unaligned",
-        desc: person.desc ? String(person.desc) : "",
-        dice: person.dice.map(d => String(d)),
-        bonusRules: Array.isArray(person.bonusRules) ? person.bonusRules.map(r => ({ ...r })) : []
-      };
-      if ((!base.bonusRules || base.bonusRules.length === 0) && defaultById.has(base.id)) {
-        base.getBonus = defaultById.get(base.id).getBonus;
-      }
-      return attachBonusHelper(base);
-    });
-
-    reconcileAssignmentsWithCurrentData();
-    setJsonScope("people", false);
-    refreshAll();
-    closeJsonModal();
-    showToast(`Imported ${CHARACTERS.length} people.`);
-    return;
-  }
-
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    showToast("Plan JSON must be an object.", true);
-    return;
-  }
-
-  applyPlanObject(parsed);
-  setJsonScope("plan", false);
-  closeJsonModal();
-  showToast("Imported turn plan.");
+function applyPlanJsonImport() {
+  applyPlanJsonText(document.getElementById("json-text").value, "editor");
 }
 
 // ==========================================
@@ -4247,7 +3212,7 @@ function formatCharWithFactionAndBonus(char, charId, dieType, bonus) {
 
 function buildExportBbCode(mode = "standard") {
   const includeRolls = mode === "rolls";
-  let lines = [includeRolls ? "[X] Plan : Turn Orders (With Rolls)" : "[X] Plan : Turn Orders"];
+  let lines = [includeRolls ? `[X] Plan : Turn ${formatTurnCode(state.currentTurn)} Orders (With Rolls)` : `[X] Plan : Turn ${formatTurnCode(state.currentTurn)} Orders`];
   let totalCost = state.tieQueueQty * 36;
   let anyAction = false;
 
@@ -4262,7 +3227,7 @@ function buildExportBbCode(mode = "standard") {
     const cat = p.subCategory ? `${p.category} — ${p.subCategory}` : p.category;
     if (!grouped[cat]) grouped[cat] = [];
 
-    const opt = p.options[inst.optionIndex || 0] || { label: "Standard", cost: 0 };
+    const opt = (p.options && p.options[inst.optionIndex || 0]) || { label: "Standard", cost: 0 };
     const projCost = (opt.cost || 0) * list.length;
     totalCost += projCost;
 
@@ -4372,9 +3337,11 @@ function copyExport() {
   showToast("Copied BBCode to clipboard!");
 }
 
-// Initial Render
+// Initial Render + Load turn01.json
 renderTabs();
 refreshAll();
+updateTurnControls();
+loadTurnByNumber(1, false);
 </script>
 </body>
 </html>
