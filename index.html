@@ -1666,7 +1666,6 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
     assignedDice += list.length;
     const opt = (p.options && p.options[inst.optionIndex || 0]) || { label: "Standard", cost: 0, effects: "" };
     const costSpent = (opt.cost || 0) * list.length;
-    totals.resourcesSpent += costSpent;
     if (opt.psCost) psSpent += opt.psCost * list.length;
 
     const bonuses = list.map(a => {
@@ -1744,7 +1743,8 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
     const queueDef = PROJECTS.find(p => p.orderType === "tieQueue" || p.id === "construction_queue") || { unitName: "10 TIE Fighter Squadron", unitCost: 36 };
     const unitCost = queueDef.unitCost || 36;
     const tieCost = state.tieQueueQty * unitCost;
-    totals.resourcesSpent += tieCost;
+    const actionDelta = { ...createEmptyDeltas(), resourcesSpent: tieCost };
+    addDeltasInto(totals, actionDelta);
     actionSummaries.push({
       instanceId: "tie_queue",
       title: queueDef.title,
@@ -1755,7 +1755,7 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
       succeeded: true,
       outcomeLabel: `Direct Order (${state.tieQueueQty}× ${unitCost} R)`,
       costSpent: tieCost,
-      delta: { ...createEmptyDeltas(), resourcesSpent: tieCost }
+      delta: actionDelta
     });
   }
 
@@ -1766,7 +1766,8 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
       .map(item => `${state.repairQueueQty[item.id]}× ${item.name}`);
     if (activeRepairs.length > 0) {
       const repCost = getRepairQueueCost();
-      totals.resourcesSpent += repCost;
+      const actionDelta = { ...createEmptyDeltas(), resourcesSpent: repCost };
+      addDeltasInto(totals, actionDelta);
       actionSummaries.push({
         instanceId: "repair_queue",
         title: repairProj.title,
@@ -1777,7 +1778,7 @@ function evaluateTurnOutcomesAtRoll(rollValue = state.assumedRoll) {
         succeeded: true,
         outcomeLabel: `Yard Order (${repCost} R)`,
         costSpent: repCost,
-        delta: { ...createEmptyDeltas(), resourcesSpent: repCost }
+        delta: actionDelta
       });
     }
   }
